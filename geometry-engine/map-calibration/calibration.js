@@ -168,6 +168,16 @@
     lot = await fetch(LOT_URL).then(r => r.json());
     centroid = computeCentroid(lot.polygon);
     drawLot();
+
+    // Additive, read-only handle so the optional OSM Context layer can share this
+    // map. Does not alter calibration behaviour; context draws in its own pane.
+    window.MapCalibration = {
+      map,
+      getCentroid: () => ({ lon: centroid.lon, lat: centroid.lat }),
+      getCalib: () => ({ ...calib }),
+      bringLotToFront: () => { if (lotPolygon) lotPolygon.bringToFront(); if (vertexGroup) vertexGroup.bringToFront(); }
+    };
+    window.dispatchEvent(new CustomEvent('kairos:map-ready'));
   }
 
   init().catch(err => { coordsBox.innerHTML = `<h4>Error</h4>${err.message}`; });

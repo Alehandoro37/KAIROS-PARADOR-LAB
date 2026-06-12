@@ -80,7 +80,36 @@
         <b>/data/calibration/</b>.</p>
     </fieldset>
 
-    <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles ©
+    <fieldset>
+      <legend>Contexto OSM / Overpass — PRELIMINAR (opcional, manual)</legend>
+      <div class="ctrl">
+        <label for="ctxRadius">Radio de búsqueda <output id="ctxRadiusOut">500 m</output></label>
+        <input type="range" id="ctxRadius" min="100" max="1500" step="50" value="500">
+      </div>
+      <button class="btn primary reset" id="ctxReloadBtn" type="button">Cargar contexto (1 consulta)</button>
+      <div class="ctrl" style="margin-top:12px">
+        <label><input type="checkbox" id="ctxRoads" checked> Vías (highways)</label>
+        <label><input type="checkbox" id="ctxRail" checked> Ferrocarril (railways)</label>
+        <label><input type="checkbox" id="ctxWater" checked> Agua (waterways / natural)</label>
+        <label><input type="checkbox" id="ctxBuildings" checked> Edificaciones (buildings)</label>
+        <label><input type="checkbox" id="ctxLabels" checked> Etiquetas (amenities / landuse)</label>
+      </div>
+      <div class="ctrl">
+        <label for="ctxOpacity">Opacidad de capas <output id="ctxOpacityOut">0.80</output></label>
+        <input type="range" id="ctxOpacity" min="0.1" max="1" step="0.05" value="0.8">
+      </div>
+      <div class="row2">
+        <button class="btn reset" id="ctxClearBtn" type="button">Limpiar cache</button>
+        <button class="btn reset" id="ctxExportBtn" type="button">Exportar contexto</button>
+      </div>
+      <p class="fineprint" id="ctxStatus">Contexto no cargado. Pulsa “Cargar contexto”.</p>
+      <p class="fineprint"><b>1 fetch MANUAL</b> a Overpass por clic (sin auto-fetch al abrir, sin polling),
+        con timeout defensivo. Overpass es un servicio público con <b>rate limits</b>. Datos © OpenStreetMap.
+        <b>PRELIMINAR</b> — contexto, no catastro. Sin red o si la API falla → usa cache local; si no hay,
+        el resto sigue intacto.</p>
+    </fieldset>
+
+    <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles y contexto ©
       OpenStreetMap contributors.</p>
   </aside>
 
@@ -90,6 +119,7 @@
     <div class="coords-box" id="coordsBox"><h4>Coordenadas</h4>Cargando lot.json…</div>
     <div class="offline-banner" id="offlineBanner">Sin conexión: los tiles de OpenStreetMap no cargaron.
       El polígono, las coordenadas y el export siguen funcionando (modo preliminar offline).</div>
+    <div class="offline-banner" id="ctxBanner" style="top:104px"></div>
     <div class="wm">PRELIMINAR — NO CATASTRO / NO TOPOGRAFÍA</div>
   </div>
 
@@ -97,5 +127,6 @@
 
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="calibration.js"></script>
+<script src="osm-context.js"></script>
 </body>
 </html>
