@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Geometry Engine v2 — KAIROS PARADOR</title>
+  <title>Geometry Engine v2 — Setback Layer V1 — KAIROS PARADOR</title>
   <link rel="stylesheet" href="../../web/css/lab.css">
 </head>
 <body>
@@ -14,6 +14,7 @@
   <aside class="panel">
     <a class="back" href="../../web/index.html">← Linear Station Lab</a>
     <h1>Geometry<br>Engine <span>v2</span></h1>
+    <p class="prelim-chip">SETBACK LAYER V1 · PRELIMINAR — PENDIENTE TOPOGRAFÍA</p>
 
     <fieldset>
       <legend>Versión de layout</legend>
@@ -23,26 +24,48 @@
         </select>
       </div>
       <button class="btn primary" id="exportBtn" type="button">Exportar layout (JSON)</button>
-      <p class="fineprint">El JSON exportado se guarda en <b>/data/layouts/</b> y se registra en manifest.json para versionarlo.</p>
+      <p class="fineprint">El JSON exportado incluye params, constraints, metrics, módulos válidos/rechazados y warnings. Guardar en <b>/data/layouts/</b> y registrar en manifest.json.</p>
     </fieldset>
 
     <fieldset>
-      <legend>Retiros — parámetros de trabajo</legend>
+      <legend>Constraints / Setbacks — PRELIMINAR</legend>
       <div class="ctrl">
-        <label for="offEast">Retiro oriental (vía/férrea) <output id="offEastOut">0 m</output></label>
-        <input type="range" id="offEast" min="0" max="40" step="0.5" value="0">
+        <label for="roadAxisOffsetM">Eje vial: distancia al lindero E <output id="roadAxisOffsetMOut">0 m</output></label>
+        <input type="range" id="roadAxisOffsetM" min="0" max="60" step="0.5" value="0">
       </div>
       <div class="ctrl">
-        <label for="offWest">Retiro occidental (fondo) <output id="offWestOut">0 m</output></label>
-        <input type="range" id="offWest" min="0" max="10" step="0.5" value="0">
+        <label for="roadSetbackM">Retiro vial desde el eje <output id="roadSetbackMOut">0 m</output></label>
+        <input type="range" id="roadSetbackM" min="0" max="60" step="0.5" value="0">
       </div>
-      <p class="fineprint"><b>No normativo.</b> Valores de exploración. Los retiros reales (vía nacional, corredor férreo) deben verificarse con topografía e INVIAS/ANI/EOT/CVC.</p>
+      <div class="ctrl">
+        <label for="railAxisOffsetM">Eje férreo: distancia al lindero E <output id="railAxisOffsetMOut">0 m</output></label>
+        <input type="range" id="railAxisOffsetM" min="0" max="60" step="0.5" value="0">
+      </div>
+      <div class="ctrl">
+        <label for="railSetbackM">Retiro férreo desde el eje <output id="railSetbackMOut">0 m</output></label>
+        <input type="range" id="railSetbackM" min="0" max="60" step="0.5" value="0">
+      </div>
+      <div class="ctrl">
+        <label for="oldRoadAxisOffsetM">Eje vía antigua: distancia al lindero E <output id="oldRoadAxisOffsetMOut">0 m</output></label>
+        <input type="range" id="oldRoadAxisOffsetM" min="0" max="80" step="0.5" value="0">
+      </div>
+      <div class="ctrl">
+        <label for="waterBufferM">Buffer hídrico desde lindero W <output id="waterBufferMOut">0 m</output></label>
+        <input type="range" id="waterBufferM" min="0" max="30" step="0.5" value="0">
+      </div>
+      <p class="fineprint">
+        <b>Todo preliminar y editable.</b> Los ejes se modelan paralelos al lindero
+        oriental A→B a la distancia que indiques; las posiciones reales y las normas
+        aplicables (Ley 1228, corredor férreo ANI, EOT, CVC) están <b>pendientes de
+        topografía y consulta</b>. Valor 0 = restricción desactivada. El buffer hídrico
+        se mide desde el lindero occidental: la posición real del cauce está sin verificar.
+      </p>
     </fieldset>
 
     <fieldset>
       <legend>Bandas de implantación</legend>
       <div class="ctrl">
-        <label for="parkBand">Banda de parqueo (desde retiro oriental) <output id="parkBandOut">5.0 m</output></label>
+        <label for="parkBand">Banda de parqueo (desde restricción E) <output id="parkBandOut">5.0 m</output></label>
         <input type="range" id="parkBand" min="0" max="12" step="0.5" value="5">
       </div>
       <div class="ctrl">
@@ -72,19 +95,19 @@
         <label for="boxStart">Inicio sobre el eje (abscisa) <output id="boxStartOut">48 m</output></label>
         <input type="range" id="boxStart" min="0" max="80" step="1" value="48">
       </div>
-      <p class="fineprint">Los módulos se dibujan solo si sus 4 esquinas quedan dentro del polígono y fuera de los retiros. Los que no caben se reportan en métricas.</p>
+      <p class="fineprint">Un módulo es <b>válido</b> si sus 4 esquinas están dentro del polígono y fuera de toda restricción; <b>inválido</b> si pisa restricción (se dibuja punteado en óxido y se reporta).</p>
     </fieldset>
 
     <p class="fineprint">
       Fuente geométrica única: <b>data/lot.json</b> (polígono KML, WGS84).
-      Proyección equirrectangular local. Dimensiones aproximadas: pendiente
-      levantamiento topográfico georreferenciado.
+      Áreas restringida y útil calculadas por muestreo en malla de 0.4 m.
+      Nada en esta capa constituye norma ni topografía verificada.
     </p>
   </aside>
 
   <!-- ============ escenario ============ -->
   <div class="stage">
-    <canvas id="lotCanvas" aria-label="Planta interactiva del lote con bandas y contenedores"></canvas>
+    <canvas id="lotCanvas" aria-label="Planta interactiva del lote con ejes preliminares, restricciones y contenedores"></canvas>
     <div class="metrics" id="metrics" role="status">
       <h4>Métricas</h4>
       Cargando lot.json…
