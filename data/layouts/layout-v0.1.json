@@ -1,0 +1,16 @@
+{
+  "project": "KAIROS PARADOR - LINEAR STATION",
+  "layout_version": "layout-v0.1",
+  "source": "geometry-engine/v2",
+  "disclaimer": "Initial working parameters. Setbacks at 0 mean not verified. Do not use for final construction design.",
+  "params": {
+    "offEast": 0,
+    "offWest": 0,
+    "parkBand": 5,
+    "walkBand": 3,
+    "boxType": 20,
+    "boxCount": 3,
+    "boxGap": 2,
+    "boxStart": 48
+  }
+}
