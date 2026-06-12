@@ -1,0 +1,36 @@
+{
+  "currency": "COP",
+  "note": "Estructura de inversión. Valores null = pendientes de cotización real. No publicar cifras sin soporte.",
+  "phases": [
+    { "id": "F0", "label": "Habilitación", "items": [
+      { "label": "Levantamiento topográfico georreferenciado", "value_cop": null },
+      { "label": "Estudio de suelos + test de percolación", "value_cop": null },
+      { "label": "Trámites: EOT, acceso vial, licencias, CVC", "value_cop": null },
+      { "label": "Cerramiento, descapote y nivelación", "value_cop": null },
+      { "label": "Acometidas (agua, energía)", "value_cop": null }
+    ]},
+    { "id": "F1", "label": "Kairos Esencial", "items": [
+      { "label": "Contenedores 20' (compra + adecuación) × 3", "value_cop": null },
+      { "label": "Módulo de baños + PMR", "value_cop": null },
+      { "label": "Sistema séptico: trampa de grasas + tanque + FAFA + campo", "value_cop": null },
+      { "label": "Plazoleta en grava compactada + adoquín puntual", "value_cop": null },
+      { "label": "Parqueo lineal en afirmado + demarcación", "value_cop": null },
+      { "label": "Tótem Kairos Parador + iluminación básica", "value_cop": null },
+      { "label": "Sombra ligera: parasoles / módulos de guadua + mesas", "value_cop": null }
+    ]},
+    { "id": "F2", "label": "Estación Kairos", "items": [
+      { "label": "Marquesina metálica + cielo de esterilla de guadua", "value_cop": null },
+      { "label": "Letrero monumental GUACARÍ", "value_cop": null },
+      { "label": "Mirador-andén ferroviario (deck + baranda + reloj)", "value_cop": null },
+      { "label": "Iluminación arquitectónica", "value_cop": null },
+      { "label": "Paisajismo estructural", "value_cop": null }
+    ]},
+    { "id": "F3", "label": "Distrito Kairos", "items": [
+      { "label": "Café ancla (40' o 2×20' en L) + terraza", "value_cop": null },
+      { "label": "Módulos adicionales (heladería/panadería, rotativos)", "value_cop": null },
+      { "label": "Baños premium (ampliación + acabados)", "value_cop": null },
+      { "label": "Zona de descanso, juegos, hamacario", "value_cop": null },
+      { "label": "Reserva técnica: tanque, respaldo eléctrico, CCTV", "value_cop": null }
+    ]}
+  ]
+}
