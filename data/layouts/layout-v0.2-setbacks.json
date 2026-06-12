@@ -1,0 +1,24 @@
+{
+  "project": "KAIROS PARADOR — LINEAR STATION",
+  "layout_version": "layout-v0.2-setbacks",
+  "source": "geometry-engine/v2 · Setback Layer V1",
+  "status": "PRELIMINAR — pendiente topografía",
+  "disclaimer": "PRELIMINAR — pendiente topografía. Todos los constraints parten en 0 (desactivados): las posiciones de ejes y los retiros deben definirse únicamente tras levantamiento topográfico georreferenciado y consulta a INVIAS/ANI, EOT de Guacarí y CVC. Ningún valor de esta capa constituye norma.",
+  "params": {
+    "parkBand": 5,
+    "walkBand": 3,
+    "boxType": 20,
+    "boxCount": 3,
+    "boxGap": 2,
+    "boxStart": 48
+  },
+  "constraints": {
+    "roadAxisOffsetM": 0,
+    "roadSetbackM": 0,
+    "railAxisOffsetM": 0,
+    "railSetbackM": 0,
+    "oldRoadAxisOffsetM": 0,
+    "waterBufferM": 0,
+    "model": "ejes paralelos al lindero A→B a distancia editable; valores de usuario, no topografía ni norma"
+  }
+}
