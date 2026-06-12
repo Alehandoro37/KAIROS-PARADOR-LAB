@@ -1,0 +1,27 @@
+{
+  "schema": "kairos.site-calibration/v1",
+  "status": "PRELIMINAR — no catastro / no topografía / no georreferenciación oficial",
+  "generatedBy": "geometry-engine/map-calibration (Real Map Calibration Layer V1)",
+  "source": {
+    "lot": "../../data/lot.json",
+    "crs": "EPSG:4326 (WGS84, lon/lat)",
+    "note": "lot.json YA está en lon/lat (WGS84), trazado sobre Google Earth por el propietario. No es un levantamiento. La calibración de abajo es un AJUSTE MANUAL PRELIMINAR para alinear visualmente el polígono con la infraestructura visible en OSM, no una corrección topográfica."
+  },
+  "view": {
+    "center": { "lat": 3.731563875059279, "lon": -76.32355543313126 },
+    "zoom": 18
+  },
+  "calibration": {
+    "offsetLat": 0,
+    "offsetLon": 0,
+    "scale": 1,
+    "rotationDeg": 0,
+    "pivot": "centroide del polígono lot.json",
+    "model": "p' = offset + R(rotationDeg) · scale · (p - centroide); rotación equirectangular aprox. (cos(lat0))"
+  },
+  "warnings": [
+    "PRELIMINAR — el georreferenciado del KML no está verificado.",
+    "La transformación de calibración es un nudge manual del usuario, no catastro ni topografía.",
+    "Los tiles de OpenStreetMap son contexto visual; su alineación no constituye norma."
+  ]
+}

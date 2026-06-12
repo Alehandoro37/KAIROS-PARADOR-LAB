@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map Calibration — PRELIMINAR — KAIROS PARADOR</title>
+  <link rel="stylesheet" href="../../web/css/lab.css">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <style>
+    /* Page-specific styles (lab.css is reused untouched). */
+    #map{width:100%;height:calc(100vh - 48px);background:#061526;border:1px solid rgba(143,229,255,.18);border-radius:22px}
+    .stage{position:relative;padding:24px}
+    .prelim-chip{display:inline-block;margin:10px 0 4px;padding:6px 10px;border:1px solid var(--oxide);border-radius:999px;color:#ffd9c9;background:rgba(176,85,60,.18);font:11px var(--mono);letter-spacing:.04em}
+    .coords-box{position:absolute;left:44px;top:44px;max-width:340px;background:rgba(3,16,29,.85);border:1px solid rgba(143,229,255,.18);border-radius:16px;padding:14px;font:12px var(--mono);color:#cbeeff;pointer-events:none;z-index:500}
+    .coords-box h4{margin:0 0 8px;color:var(--gold);font-size:12px}
+    .coords-box code{color:#bdeaff}
+    .offline-banner{position:absolute;right:44px;top:44px;max-width:320px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:12px 14px;font:12px var(--mono);z-index:600;display:none}
+    .offline-banner.show{display:block}
+    .leaflet-container{font-family:var(--mono)}
+    .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(255,211,107,.5);font:700 13px var(--mono);letter-spacing:.12em;pointer-events:none;text-align:center}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .reset{width:100%}
+  </style>
+</head>
+<body>
+
+<div class="engine-layout">
+
+  <!-- ============ panel de control ============ -->
+  <aside class="panel">
+    <a class="back" href="../../web/index.html">← Linear Station Lab</a>
+    <h1>Map<br>Calibration</h1>
+    <p class="prelim-chip">PRELIMINAR · NO CATASTRO · NO TOPOGRAFÍA</p>
+    <p class="fineprint">Superpone el polígono de <b>data/lot.json</b> (WGS84, trazado sobre Google Earth)
+      sobre un mapa base <b>OpenStreetMap</b> para alinearlo visualmente con la infraestructura cercana.
+      Nada aquí es catastro ni levantamiento. Solo los <i>tiles</i> requieren internet; el resto funciona offline.</p>
+
+    <fieldset>
+      <legend>Capas</legend>
+      <div class="ctrl"><label><input type="checkbox" id="toggleLot" checked> Polígono del lote</label></div>
+      <div class="ctrl"><label><input type="checkbox" id="toggleVertices" checked> Vértices + centroide</label></div>
+      <div class="ctrl">
+        <label for="baseLayer">Mapa base</label>
+        <select id="baseLayer">
+          <option value="osm">OpenStreetMap (requiere internet)</option>
+          <option value="placeholder">Contexto / satélite — placeholder (offline)</option>
+        </select>
+      </div>
+      <button class="btn reset" id="resetBtn" type="button">Reset view</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Calibración manual — PRELIMINAR</legend>
+      <div class="ctrl">
+        <label for="offsetLat">Offset latitud <output id="offsetLatOut">0.000000°</output></label>
+        <input type="range" id="offsetLat" min="-0.002" max="0.002" step="0.000005" value="0">
+      </div>
+      <div class="ctrl">
+        <label for="offsetLon">Offset longitud <output id="offsetLonOut">0.000000°</output></label>
+        <input type="range" id="offsetLon" min="-0.002" max="0.002" step="0.000005" value="0">
+      </div>
+      <div class="ctrl">
+        <label for="scale">Escala <output id="scaleOut">1.000</output></label>
+        <input type="range" id="scale" min="0.5" max="2" step="0.005" value="1">
+      </div>
+      <div class="ctrl">
+        <label for="rotationDeg">Rotación <output id="rotationDegOut">0.0°</output></label>
+        <input type="range" id="rotationDeg" min="-180" max="180" step="0.5" value="0">
+      </div>
+      <button class="btn reset" id="resetCalibBtn" type="button">Reset calibración</button>
+      <p class="fineprint">Pivote = centroide del polígono. La calibración es un <b>ajuste manual</b> para
+        alinear visualmente; <b>no</b> corrige el georreferenciado ni constituye topografía.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Exportar</legend>
+      <button class="btn primary reset" id="exportBtn" type="button">Exportar calibración (JSON)</button>
+      <p class="fineprint">Incluye centro y zoom del mapa, bounds del polígono, centroide, ruta de
+        <b>lot.json</b>, la transformación de calibración y la advertencia PRELIMINAR. Guardar en
+        <b>/data/calibration/</b>.</p>
+    </fieldset>
+
+    <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles ©
+      OpenStreetMap contributors.</p>
+  </aside>
+
+  <!-- ============ escenario ============ -->
+  <div class="stage">
+    <div id="map" aria-label="Mapa de calibración preliminar con polígono del lote sobre OpenStreetMap"></div>
+    <div class="coords-box" id="coordsBox"><h4>Coordenadas</h4>Cargando lot.json…</div>
+    <div class="offline-banner" id="offlineBanner">Sin conexión: los tiles de OpenStreetMap no cargaron.
+      El polígono, las coordenadas y el export siguen funcionando (modo preliminar offline).</div>
+    <div class="wm">PRELIMINAR — NO CATASTRO / NO TOPOGRAFÍA</div>
+  </div>
+
+</div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="calibration.js"></script>
+</body>
+</html>
