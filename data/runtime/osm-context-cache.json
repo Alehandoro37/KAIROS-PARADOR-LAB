@@ -1,7 +1,0 @@
-{
-  "schema": "kairos.osm-context-cache/v1",
-  "status": "PRELIMINAR — semilla VACÍA. El cache real se guarda en localStorage del navegador (y como JSON descargable vía 'Exportar contexto'). En GitHub Pages el filesystem es read-only, por lo que NUNCA se escribe a este archivo en runtime.",
-  "note": "Este archivo versionado existe para que la ruta sea estable y sirva de fallback offline. Para precargar contexto, puede reemplazarse manualmente por un export real (elements[] de Overpass) y commitearse; el visor lo cargará si localStorage está vacío.",
-  "meta": null,
-  "elements": []
-}

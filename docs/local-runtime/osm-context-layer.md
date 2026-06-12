@@ -53,39 +53,49 @@ Cada capa es un `L.layerGroup` propio (toggle independiente). Se dibujan en un *
 dedicado (`ctxPane`, z-index 350) **por debajo** del polígono del lote, que se trae al frente
 tras cada render. La opacidad afecta a todas las capas de contexto.
 
-## 4. Degradación elegante (sin red / API caída)
+## 4. Degradación elegante y cadena de fallback
 
-- Si Overpass **falla o expira**: si hay **cache local** se muestra ese contexto + banner
-  “Overpass no disponible — mostrando cache local”; si **no** hay cache, banner “Contexto OSM
-  no disponible” y el mapa/polígono/calibración **siguen intactos**.
+**Cadena de fallback si Overpass falla/expira:** `localStorage` → seed estático → banner.
+
+- Si hay **cache en localStorage** se muestra ese contexto + banner “mostrando cache de
+  localStorage”.
+- Si no, se intenta el **seed estático** `data/osm/osm-context-seed.json` + banner “mostrando
+  seed estático”.
+- Si tampoco, banner “Contexto OSM no disponible” y el mapa/polígono/calibración **siguen
+  intactos**.
 - Sin internet, el resto de la página funciona (Leaflet es local; `lot.json` y calibración son
   locales). Solo se pierde la posibilidad de **traer** contexto nuevo.
 
-## 5. Cache local (Pages-safe: sin escritura a disco)
+## 5. Cache (Pages-safe: GitHub Pages NO permite escritura)
 
-- El cache **real** se guarda en **`localStorage`** del navegador (clave
-  `kairos:osm-context-cache/v1`) tras cada fetch exitoso, y como JSON descargable vía
-  **Exportar contexto**.
-- En **GitHub Pages el filesystem es read-only**: **nunca** se escribe a disco en runtime.
-- `data/runtime/osm-context-cache.json` es una **semilla versionada y VACÍA** (`elements: []`).
-  Existe para que la ruta sea estable y servir de **fallback** offline si `localStorage` está
-  vacío. Puede reemplazarse a mano por un export real y commitearse para precargar contexto.
-- Al abrir, la restauración de cache es **pasiva** (sin red): primero `localStorage`, luego la
-  semilla. Eso **no** es un fetch a Overpass.
+**GitHub Pages sirve un filesystem read-only: la app NUNCA escribe al repo en runtime.**
+
+- **Cache runtime = `localStorage` del navegador.** Clave **`kairos.osmContext.v1`**. Objeto:
+  `{ timestamp, bbox, centroid, radius, featureCounts, geojson }`. Se guarda tras cada fetch
+  exitoso.
+- **Seed / fallback versionado = `data/osm/osm-context-seed.json`** (archivo **estático** de
+  respaldo, **nunca** se sobrescribe desde la app). En este repo viene poblado con un snapshot
+  OSM real del entorno (mismo esquema que el cache: `{ ..., geojson }`).
+- **Export = descarga manual** (botón **“Export context JSON”**): genera y descarga un archivo;
+  **no** intenta escribir al repo.
+- **Clear cache** borra **solo** `localStorage` (no toca archivos).
+- Al abrir, la restauración es **pasiva** (sin red a Overpass): primero `localStorage`, luego
+  el seed estático. Eso **no** es un fetch a Overpass.
 
 ## 6. Export
 
-**“Exportar contexto”** descarga `calibration-context-export.json` (`schema:
+**“Export context JSON”** descarga `calibration-context-export.json` (`schema:
 kairos.calibration-context/v1`) con: **bbox**, **centroide**, **radio**, **timestamp**,
-**endpoint** y **query Overpass**, **conteo de features** por capa + total, momento del fetch,
-ruta de fuente y **advertencias PRELIMINAR**.
+**endpoint** y **query Overpass**, **featureCounts** por capa + total, el **geojson** y
+**advertencias PRELIMINAR**.
 
 ## 7. Rutas (relativas, un solo origen)
 
 Desde `geometry-engine/map-calibration/`:
 - `osm-context.js` (local) · usa `window.MapCalibration.map` expuesto por `calibration.js`.
-- `fetch ../../data/runtime/osm-context-cache.json` (semilla, opcional, try/catch).
+- `fetch ../../data/osm/osm-context-seed.json` (seed estático de fallback, opcional, try/catch).
 - `fetch https://overpass-api.de/api/interpreter` (externo, **solo** al pulsar el botón).
+- Cache runtime: `localStorage` (sin ruta de archivo; no se escribe a disco).
 
 Todo client-side; sin backend → **Pages-compatible**.
 

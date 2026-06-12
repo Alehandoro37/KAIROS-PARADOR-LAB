@@ -99,14 +99,16 @@
         <input type="range" id="ctxOpacity" min="0.1" max="1" step="0.05" value="0.8">
       </div>
       <div class="row2">
-        <button class="btn reset" id="ctxClearBtn" type="button">Limpiar cache</button>
-        <button class="btn reset" id="ctxExportBtn" type="button">Exportar contexto</button>
+        <button class="btn reset" id="ctxClearBtn" type="button">Clear cache</button>
+        <button class="btn reset" id="ctxExportBtn" type="button">Export context JSON</button>
       </div>
       <p class="fineprint" id="ctxStatus">Contexto no cargado. Pulsa “Cargar contexto”.</p>
       <p class="fineprint"><b>1 fetch MANUAL</b> a Overpass por clic (sin auto-fetch al abrir, sin polling),
         con timeout defensivo. Overpass es un servicio público con <b>rate limits</b>. Datos © OpenStreetMap.
-        <b>PRELIMINAR</b> — contexto, no catastro. Sin red o si la API falla → usa cache local; si no hay,
-        el resto sigue intacto.</p>
+        <b>PRELIMINAR</b> — contexto, no catastro. <b>Cache runtime = localStorage</b>
+        (<code>kairos.osmContext.v1</code>); GitHub Pages es read-only (no se escribe al repo).
+        <b>Fallback:</b> localStorage → seed estático <code>data/osm/osm-context-seed.json</code> → banner,
+        sin romper el mapa. <b>Export</b> = descarga manual. <b>Clear cache</b> borra solo localStorage.</p>
     </fieldset>
 
     <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles y contexto ©
