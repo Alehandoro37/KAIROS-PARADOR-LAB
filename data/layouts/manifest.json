@@ -1,6 +1,15 @@
 {
   "note": "Índice de versiones de layout exportadas desde geometry-engine/v2. Añadir cada JSON exportado aquí.",
   "layouts": [
-    { "id": "v0.1", "file": "layout-v0.1.json", "label": "v0.1 — base 3×20' sin retiros" }
+    {
+      "id": "v0.1",
+      "file": "layout-v0.1.json",
+      "label": "v0.1 — base 3×20' sin retiros"
+    },
+    {
+      "id": "v0.2",
+      "file": "layout-v0.2-setbacks.json",
+      "label": "v0.2 — setback layer en 0 (PRELIMINAR — pendiente topografía)"
+    }
   ]
 }
