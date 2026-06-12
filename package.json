@@ -1,0 +1,35 @@
+{
+  "name": "kairos-parador-lab",
+  "version": "0.2.0",
+  "private": true,
+  "description": "KAIROS PARADOR — Linear Station Lab. Laboratorio arquitectónico/geodésico estático (HTML + Canvas 2D + JSON). Ejecutable offline mediante servidor estático y compatible con GitHub Pages.",
+  "keywords": [
+    "kairos",
+    "parador",
+    "geometry-engine",
+    "canvas",
+    "static-site",
+    "geodesic",
+    "guacari"
+  ],
+  "license": "UNLICENSED",
+  "homepage": "https://alehandoro37.github.io/KAIROS-PARADOR-LAB/web/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alehandoro37/KAIROS-PARADOR-LAB.git"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "start": "live-server --port=8080 --no-browser --entry-file=web/index.html .",
+    "dev": "live-server --port=8080 --open=/web/index.html .",
+    "serve": "python3 -m http.server 8080",
+    "serve:py": "python3 -m http.server 8080",
+    "serve:node": "npx --yes http-server . -p 8080 -c-1",
+    "open": "open http://localhost:8080/web/"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}

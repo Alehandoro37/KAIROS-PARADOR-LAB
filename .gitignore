@@ -1,0 +1,24 @@
+# ---- Node / tooling ----
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ---- Editor / OS ----
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ---- Runtime / temp ----
+*.log
+.cache/
+.tmp/
+
+# ---- Exports generados por el Geometry Engine (no versionar a menos que se registren a mano) ----
+layout-export-*.json
+
+# NOTA: data/ y web/assets/renders/ SÍ se versionan (son fuentes del lab, no artefactos).
