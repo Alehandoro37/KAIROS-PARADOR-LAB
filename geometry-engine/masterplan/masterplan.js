@@ -1,11 +1,16 @@
-/* KAIROS PARADOR — Masterplan Blueprint V2 / engine
- * PRELIMINAR · CONCEPTUAL experiential overlay on Canvas 2D: organic curves
- * (quadratic smoothing), layered vegetation, warm glow nodes, view corridors.
- * Parametric and relative to the Logos lot; keeps the conflict detection. Reuses
- * NOTHING from Engine v2, does NOT modify lot.json, draws OSM context from the seed
- * if present. Not architecture, not cadastre. */
+/* KAIROS PARADOR — Masterplan Blueprint V2 / engine (V2.1 modular render)
+ * PRELIMINAR · CONCEPTUAL experiential overlay on Canvas 2D. The render logic now
+ * lives in four vanilla ES utilities — bezier-path-utils · landscape-symbols ·
+ * atmosphere-renderer · composition-grid — and this file orchestrates: projection,
+ * lot frame, parametric program resolution, conflict detection, fit, UI and export.
+ * Reuses NOTHING from Engine v2, does NOT modify lot.json, draws OSM context from
+ * the seed if present. Not architecture, not cadastre. */
 import { LAYERS, GROUPS, MOOD, WARNING, buildExperience } from './masterplan-data.js';
 import { exportJSON, exportPNG } from './masterplan-export.js';
+import { trace, tracePoly } from './bezier-path-utils.js';
+import { drawPalm, stippleFoliage } from './landscape-symbols.js';
+import { glowNode, fireNode, viewCorridor } from './atmosphere-renderer.js';
+import { background, vignette, deckTexture, label, watermark, orderIndex } from './composition-grid.js';
 
 const LOT_URL = '../../data/lot.json';
 const SEED_URL = '../../data/osm/osm-context-seed.json';
@@ -13,7 +18,6 @@ const PAD = 56;
 
 const $ = (id) => document.getElementById(id);
 const colorOf = (k) => (LAYERS.find(l => l.key === k) || {}).color || '#ffffff';
-const groupOf = (k) => (LAYERS.find(l => l.key === k) || {}).group || 'program';
 
 const canvas = $('mpCanvas');
 const ctx = canvas.getContext('2d');
@@ -90,22 +94,11 @@ function fit(w) {
   const offX = PAD + (cw - (bbox.maxX - bbox.minX) * scale) / 2;
   return { x: offX + (w.x - bbox.minX) * scale, y: canvas.clientHeight - PAD - (w.y - bbox.minY) * scale };
 }
-// smoothing -----------------------------------------------------------------
-function smoothClosed(sp) {
-  ctx.beginPath();
-  const n = sp.length, mid = (i) => ({ x: (sp[i].x + sp[(i + 1) % n].x) / 2, y: (sp[i].y + sp[(i + 1) % n].y) / 2 });
-  let m0 = mid(n - 1); ctx.moveTo(m0.x, m0.y);
-  for (let i = 0; i < n; i++) { const mi = mid(i); ctx.quadraticCurveTo(sp[i].x, sp[i].y, mi.x, mi.y); }
-  ctx.closePath();
-}
-function smoothOpen(sp) {
-  ctx.beginPath(); ctx.moveTo(sp[0].x, sp[0].y);
-  for (let i = 1; i < sp.length - 1; i++) { const mx = (sp[i].x + sp[i + 1].x) / 2, my = (sp[i].y + sp[i + 1].y) / 2; ctx.quadraticCurveTo(sp[i].x, sp[i].y, mx, my); }
-  ctx.lineTo(sp[sp.length - 1].x, sp[sp.length - 1].y);
-}
 
-// ---- rendering -------------------------------------------------------------
+// ---- rendering (delegated to the four utilities) ---------------------------
 const ALPHA = { solid: 0.30, soft: 0.18, veg: 0.14, faint: 0.07 };
+const vis = (e) => visible.has(e.layer);
+
 function drawContext() {
   if (!seed || !visible.has('context') || !seed.geojson) return;
   const col = colorOf('context');
@@ -116,75 +109,60 @@ function drawContext() {
     ctx.save(); ctx.globalAlpha = 0.45; ctx.strokeStyle = col; ctx.lineWidth = f.properties.category === 'rail' ? 1.6 : 1.1;
     if (f.properties.category === 'rail') ctx.setLineDash([6, 5]);
     if (g.type === 'Point') { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(sp[0].x, sp[0].y, 1.8, 0, 7); ctx.fill(); }
-    else { ctx.beginPath(); sp.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); }
+    else { tracePoly(ctx, sp, false); ctx.stroke(); }
     ctx.restore();
   });
 }
-function drawClosed(e) {
-  const sp = e.world.map(fit);
+
+function drawElement(e) {
+  if (!vis(e)) return;
   const col = e.conflictive ? '#ff7a5c' : colorOf(e.layer);
-  ctx.save(); smoothClosed(sp);
-  ctx.globalAlpha = ALPHA[e.style] || 0.2; ctx.fillStyle = col; ctx.fill();
-  ctx.globalAlpha = 1; ctx.lineWidth = e.conflictive ? 2.2 : (e.style === 'solid' ? 1.8 : 1);
-  ctx.strokeStyle = col; ctx.setLineDash(e.future || e.conflictive ? [7, 5] : []);
-  if (e.style !== 'veg' && e.style !== 'faint') ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-}
-function drawOpen(e) {
-  const sp = e.world.map(fit); const col = e.conflictive ? '#ff7a5c' : colorOf(e.layer);
-  ctx.save(); smoothOpen(sp); ctx.strokeStyle = col; ctx.lineWidth = e.layer === 'promenade' ? 3 : 2;
-  ctx.globalAlpha = 0.85; ctx.setLineDash(e.layer === 'paths' ? [6, 5] : []); ctx.lineCap = 'round'; ctx.stroke(); ctx.restore();
-}
-function drawNode(e) {
-  const q = fit(e.worldC); const col = e.conflictive ? '#ff7a5c' : colorOf(e.layer);
-  const rpx = Math.max(6, (e.r || 1.5) * scale);
-  ctx.save();
-  if (e.glow) {
-    const g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, rpx * 2.2);
-    g.addColorStop(0, col); g.addColorStop(0.25, col + 'aa'); g.addColorStop(1, col + '00');
-    ctx.globalAlpha = 0.55; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, rpx * 2.2, 0, 7); ctx.fill();
+
+  if (e.kind === 'lot') {
+    const sp = lotWorld.map(fit);
+    ctx.save(); tracePoly(ctx, sp, true); ctx.fillStyle = 'rgba(143,229,255,.05)'; ctx.fill();
+    ctx.strokeStyle = colorOf('lot'); ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore(); return;
   }
-  ctx.globalAlpha = 1; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(q.x, q.y, e.layer === 'palms' ? 3 : 3.6, 0, 7); ctx.fill();
-  ctx.restore();
+  if (e.kind === 'wedge') { const sp = e.world.map(fit); viewCorridor(ctx, sp[0], sp[1], sp[2], col); return; }
+  if (e.kind === 'node') {
+    const q = fit(e.worldC);
+    if (e.layer === 'palms') drawPalm(ctx, q.x, q.y, Math.max(12, (e.r || 1.4) * scale * 2.4), col);
+    else if (e.layer === 'fire') fireNode(ctx, q.x, q.y, Math.max(10, (e.r || 2) * scale));
+    else glowNode(ctx, q.x, q.y, Math.max(13, (e.r || 1.8) * scale * 2.2), col, 0.55, 3.6);
+    return;
+  }
+  if (e.kind === 'open') {
+    const sp = e.world.map(fit);
+    ctx.save(); trace(ctx, sp, { smooth: true, closed: false });
+    ctx.strokeStyle = col; ctx.lineWidth = e.layer === 'promenade' ? 3 : 2; ctx.globalAlpha = 0.85;
+    ctx.setLineDash(e.layer === 'paths' ? [6, 5] : []); ctx.lineCap = 'round'; ctx.stroke(); ctx.restore(); return;
+  }
+  // closed
+  const sp = e.world.map(fit);
+  ctx.save(); trace(ctx, sp, { smooth: true, closed: true });
+  ctx.globalAlpha = ALPHA[e.style] || 0.2; ctx.fillStyle = col; ctx.fill(); ctx.restore();
+  if (e.style === 'veg' || e.style === 'faint') {
+    stippleFoliage(ctx, sp, col, e.id, { spacing: e.style === 'faint' ? 1600 : 1100 });
+  } else {
+    ctx.save(); trace(ctx, sp, { smooth: true, closed: true });
+    ctx.lineWidth = e.conflictive ? 2.2 : (e.style === 'solid' ? 1.8 : 1); ctx.strokeStyle = col;
+    ctx.setLineDash(e.future || e.conflictive ? [7, 5] : []); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+    if (e.layer === 'pavilions' || e.layer === 'railway') deckTexture(ctx, sp, col);
+  }
 }
-function drawWedge(e) {
-  const sp = e.world.map(fit); const col = colorOf(e.layer);
-  ctx.save(); const g = ctx.createLinearGradient(sp[0].x, sp[0].y, (sp[1].x + sp[2].x) / 2, (sp[1].y + sp[2].y) / 2);
-  g.addColorStop(0, col + '55'); g.addColorStop(1, col + '00');
-  ctx.beginPath(); ctx.moveTo(sp[0].x, sp[0].y); ctx.lineTo(sp[1].x, sp[1].y); ctx.lineTo(sp[2].x, sp[2].y); ctx.closePath();
-  ctx.fillStyle = g; ctx.fill(); ctx.restore();
-}
-function vis(e) { return visible.has(e.layer); }
+
 function draw() {
   if (!lotWorld.length) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
-  const bg = ctx.createRadialGradient(W * 0.5, H * 0.42, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.8);
-  bg.addColorStop(0, '#0a2233'); bg.addColorStop(1, '#05101d');
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  background(ctx, W, H);
   drawContext();
-  // landscape (back)
-  elements.filter(e => vis(e) && e.world && (e.style === 'veg' || e.style === 'faint')).forEach(drawClosed);
-  // view corridors
-  elements.filter(e => vis(e) && e.kind === 'wedge').forEach(drawWedge);
-  // lot outline
-  if (visible.has('lot')) { const sp = lotWorld.map(fit); ctx.save(); ctx.beginPath(); sp.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fillStyle = 'rgba(143,229,255,.05)'; ctx.fill(); ctx.strokeStyle = colorOf('lot'); ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore(); }
-  // circulation
-  elements.filter(e => vis(e) && e.kind === 'open').forEach(drawOpen);
-  // program solid/soft closed (plaza, pavilions, railway, future, technical)
-  elements.filter(e => vis(e) && e.world && (e.style === 'solid' || e.style === 'soft')).forEach(drawClosed);
-  // nodes (palms then atmosphere glows on top)
-  elements.filter(e => vis(e) && e.kind === 'node' && e.layer === 'palms').forEach(drawNode);
-  elements.filter(e => vis(e) && e.kind === 'node' && e.layer !== 'palms').forEach(drawNode);
+  // composed back→front by layer hierarchy
+  [...elements].filter(e => e.kind !== 'context').sort((a, b) => orderIndex(a.layer) - orderIndex(b.layer)).forEach(drawElement);
   // labels for key program elements + conflict markers
-  ctx.save(); ctx.font = '11px ui-monospace, monospace'; ctx.textAlign = 'center';
-  elements.filter(e => vis(e) && e.world && ['plaza', 'pavilions', 'railway', 'future', 'arrival', 'technical'].includes(e.layer)).forEach(e => {
-    const q = fit(e.worldCenter); ctx.fillStyle = e.conflictive ? '#ffd0c4' : '#eaf6ff';
-    ctx.fillText(e.conflictive ? `${e.n}!` : `${e.n}`, q.x, q.y + 3);
-  });
-  ctx.restore();
-  // watermark
-  ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 9); ctx.font = '700 22px ui-monospace, monospace';
-  ctx.fillStyle = 'rgba(255,158,107,.15)'; ctx.textAlign = 'center'; ctx.fillText('PRELIMINAR · CONCEPTUAL — NO CATASTRO', 0, 0); ctx.restore();
+  elements.filter(e => vis(e) && e.world && ['plaza', 'pavilions', 'railway', 'future', 'arrival', 'technical'].includes(e.layer))
+    .forEach(e => { const q = fit(e.worldCenter); label(ctx, q.x, q.y + 3, e.conflictive ? `${e.n}!` : `${e.n}`, e.conflictive ? '#ffd0c4' : '#eaf6ff'); });
+  vignette(ctx, W, H);
+  watermark(ctx, W, H, 'PRELIMINAR · CONCEPTUAL — NO CATASTRO');
   updatePanel();
 }
 function resize() {
@@ -211,13 +189,12 @@ function updatePanel() {
     `<p class="fineprint">Cifras APROXIMADAS (~metros), conceptuales, no catastrales.</p>`;
 }
 function buildControls() {
-  // grouped layer toggles + group master toggles
   const cont = $('mpLayers');
   cont.innerHTML = GROUPS.map(g => {
     const items = LAYERS.filter(l => l.group === g).map(l =>
       `<label class="lyr"><input type="checkbox" data-key="${l.key}" checked> <span class="sw" style="background:${l.color}"></span>${l.label}</label>`).join('');
-    const master = g === 'program' ? '' : `<label class="grp"><input type="checkbox" data-group="${g}" checked> <b>${g.toUpperCase()}</b></label>`;
-    return `<div class="grpbox">${master || `<b class="grphdr">${g.toUpperCase()}</b>`}${items}</div>`;
+    const master = g === 'program' ? `<b class="grphdr">${g.toUpperCase()}</b>` : `<label class="grp"><input type="checkbox" data-group="${g}" checked> <b>${g.toUpperCase()}</b></label>`;
+    return `<div class="grpbox">${master}${items}</div>`;
   }).join('');
   cont.querySelectorAll('input[data-key]').forEach(chk => chk.addEventListener('change', e => {
     const k = e.target.dataset.key; e.target.checked ? visible.add(k) : visible.delete(k); draw();
@@ -230,7 +207,6 @@ function buildControls() {
     });
     draw();
   }));
-  // mood legend
   $('mpMood').innerHTML = MOOD.map(m => `<div class="mood"><span class="sw" style="background:${m.color}"></span><b>${m.label}</b> — ${m.note}</div>`).join('');
   $('mpReset').addEventListener('click', () => { computeBox(); draw(); });
   $('mpExportJson').addEventListener('click', () => exportJSON({ frame, centroidLL: { lat: lat0, lon: lon0 }, lotAreaM2, elements, areasByLayer }));
