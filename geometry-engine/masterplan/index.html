@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Masterplan Blueprint V2 — Experiential — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
+  <title>Masterplan Blueprint V3 — Visitor Journey — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
   <link rel="stylesheet" href="../../web/css/lab.css">
   <style>
     /* Page-specific styles (lab.css reused untouched). */
@@ -23,6 +23,8 @@
     .grphdr{display:block;color:var(--gold);font:11px var(--mono);letter-spacing:.06em;margin-bottom:4px}
     .mood{display:flex;align-items:center;gap:6px;color:#cbeeff;font-size:12px;margin:5px 0}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center}
+    .row3 .btn{justify-content:center;padding:8px 10px}
     .reset{width:100%}
   </style>
 </head>
@@ -33,8 +35,8 @@
   <!-- ============ panel de control ============ -->
   <aside class="panel">
     <a class="back" href="../../web/index.html">← Linear Station Lab</a>
-    <h1>Masterplan<br>Blueprint <span style="color:var(--gold)">V2</span></h1>
-    <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — EXPERIENCIAL · NO DISEÑO FINAL</p>
+    <h1>Masterplan<br>Blueprint <span style="color:var(--gold)">V3</span></h1>
+    <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — VISITOR JOURNEY · NO DISEÑO FINAL</p>
     <p class="fineprint">Rediseño <b>experiencial</b> tipo eco-retreat tropical: llegada, plaza orgánica,
       pabellones, promenade, paisaje y atmósfera. <b>Paramétrico y relativo</b> al polígono de
       <b>data/lot.json</b> (se reubica si el lote cambia); las formas fuera del polígono se marcan
@@ -43,6 +45,23 @@
     <fieldset>
       <legend>Capas (toggles por grupo)</legend>
       <div id="mpLayers"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Visitor Journey (cinematic)</legend>
+      <button class="btn primary reset" id="mpJourneyToggle" type="button">Start Journey</button>
+      <div class="row3" style="margin-top:10px">
+        <button class="btn" id="mpPrev" type="button">‹ Prev</button>
+        <label class="lyr" style="justify-content:center"><input type="checkbox" id="mpAutoplay"> Auto</label>
+        <button class="btn" id="mpNext" type="button">Next ›</button>
+      </div>
+      <p class="fineprint" id="mpJourneyState">Journey detenido</p>
+      <p class="fineprint">9 paradas con cámara suave: Arrival · Parking · Plaza · Pabellones · Railway Café · Sunset Lounge · Fogata · Wellness · Expansión.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Experience layers (visual)</legend>
+      <div id="mpExperience"></div>
     </fieldset>
 
     <fieldset>

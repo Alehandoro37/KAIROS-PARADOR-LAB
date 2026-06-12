@@ -33,6 +33,26 @@ export function drawTree(ctx, x, y, s, color = '#5fae7f') {
   ctx.restore();
 }
 
+// ---- human scale (V3) — very subtle, not caricature ------------------------
+// Small person silhouette: head + tapered body. (x,y) = feet; s = height px.
+export function drawPerson(ctx, x, y, s, color = '#dfe9f2') {
+  s = Math.max(3.2, s);
+  ctx.save(); ctx.fillStyle = color; ctx.globalAlpha = 0.78;
+  ctx.beginPath(); ctx.arc(x, y - s, s * 0.32, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x, y - s * 0.85); ctx.lineTo(x - s * 0.3, y); ctx.lineTo(x + s * 0.3, y); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+// Round café table (top view ring).
+export function drawTable(ctx, x, y, s, color = '#cdbfa6') {
+  ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = 0.55; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(x, y, Math.max(2, s), 0, 7); ctx.stroke(); ctx.restore();
+}
+// Bench (short bar).
+export function drawBench(ctx, x, y, s, color = '#b9a98c') {
+  ctx.save(); ctx.strokeStyle = color; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - s, y); ctx.lineTo(x + s, y); ctx.stroke(); ctx.restore();
+}
+
 // Sparse foliage stipple inside a closed screen-space polygon. Seeded by `id`.
 export function stippleFoliage(ctx, screenPts, color, id, opts = {}) {
   const xs = screenPts.map(p => p.x), ys = screenPts.map(p => p.y);

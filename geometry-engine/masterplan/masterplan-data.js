@@ -99,8 +99,10 @@ export function buildExperience(L, T) {
 
   // 6 · RAILWAY LOUNGE EDGE — linear lounge band hugging the rail-side frontage,
   // plus a mirador/deck node framing the line.
-  closed('railway-lounge', 6, 'railway', blob(0.44 * L, 2.9, 15, 1.7, 9, 0.10), 'soft', { label: 'Railway lounge lineal', conflict: 'center' });
-  node('railway-mirador', 6, 'railway', 0.34 * L, 2.2, 2.4, { label: 'Mirador / deck ferroviario', glow: true });
+  closed('railway-lounge', 6, 'railway', blob(0.44 * L, 2.9, 15, 1.7, 9, 0.10), 'soft', { label: 'Railway lounge (identity zone)', conflict: 'center', identity: true });
+  node('railway-mirador', 6, 'railway', 0.34 * L, 2.2, 2.4, { label: 'Mirador / deck ferroviario (viewing edge)', glow: true, identity: true });
+  // Railway-inspired LINEAR LIGHTING along the rail-side frontage (industrial+tropical).
+  for (let i = 0; i < 5; i++) node(`rail-light-${i + 1}`, 6, 'railway', (0.30 + i * 0.075) * L, 1.4, 1.3, { label: `Railway linear light ${i + 1}`, glow: true });
 
   // 7 · FUTURE RESERVES — Eco Suites (inside, deep end) + Wellness Expansion
   // (reserve that reaches beyond the current lot → flagged CONFLICTIVO, meaningful).
@@ -149,3 +151,43 @@ export function buildExperience(L, T) {
 
   return els;
 }
+
+/* ===================== V3 — Visitor Journey / Cinematic ===================== */
+
+// 9-stop guided narrative. `focus` = element id (the camera centres on it); `tone`
+// drives the atmospheric wash; `highlight` = layers emphasised; `zoom` preset.
+export const JOURNEY = [
+  { id: 'arrival',   title: 'Arrival Gateway',              focus: 'arrival-signage',  tone: 'warm',     zoom: 2.2, highlight: ['arrival', 'promenade'], text: 'Signage KAIROS y una llegada suave entre vegetación: el umbral del eco-retreat.' },
+  { id: 'parking',   title: 'Hidden Parking Garden',        focus: 'parking-veiled',   tone: 'day',      zoom: 2.0, highlight: ['parkingGreen', 'palms'], text: 'El auto desaparece: gravel, palmas y árboles velan el parqueo. Cero presencia dura.' },
+  { id: 'plaza',     title: 'Central Organic Plaza',        focus: 'plaza',            tone: 'warm',     zoom: 2.3, highlight: ['plaza', 'gathering', 'paths'], text: 'El corazón orgánico: mesas, encuentro, música y luz cálida bajo la marquesina.' },
+  { id: 'pavilions', title: 'Tropical Restaurant Pavilions', focus: 'pavilion-1',      tone: 'market',   zoom: 2.4, highlight: ['pavilions', 'lighting'], text: 'Pabellones independientes con decks abiertos, separados por jardín — tropical market.' },
+  { id: 'railway',   title: 'Railway Café',                 focus: 'railway-mirador',  tone: 'industrial', zoom: 2.5, highlight: ['railway', 'view'], text: 'El borde ferroviario como identidad: café, mirador y marcos visuales hacia la vía.' },
+  { id: 'sunset',    title: 'Sunset Lounge',                focus: 'lounge',           tone: 'sunset',   zoom: 2.4, highlight: ['lounge', 'lighting'], text: 'Tarde cálida: lounge, tonos de atardecer y warmth tropical sobre el andén.' },
+  { id: 'fire',      title: 'Fire Gathering Node',          focus: 'fire',             tone: 'night',    zoom: 2.6, highlight: ['fire', 'gathering'], text: 'De noche, la fogata reúne: glow cálido, siluetas y conversación bajo el cielo.' },
+  { id: 'wellness',  title: 'Wellness Grove',               focus: 'future-suites',    tone: 'wellness', zoom: 2.1, highlight: ['future', 'gardens', 'canopy'], text: 'Un claro tranquilo: eco-suites futuras entre canopy y jardines — quiet wellness.' },
+  { id: 'expansion', title: 'Future Expansion Reserve',     focus: 'future-wellness',  tone: 'day',      zoom: 1.9, highlight: ['future'], text: 'Reserva conceptual para crecer: wellness expansion más allá del lote actual.' }
+];
+
+// Visual-only experience layers (no real audio) — toggles that retint/charge the scene.
+export const EXPERIENCE_LAYERS = [
+  { key: 'night',   label: 'Night ambiance',   tone: 'night',   note: 'azules nocturnos + glow' },
+  { key: 'social',  label: 'Social energy',    tone: 'warm',    note: 'más gente + chispa cálida' },
+  { key: 'wellness',label: 'Quiet wellness',   tone: 'wellness',note: 'verdes suaves, calma' },
+  { key: 'market',  label: 'Market atmosphere',tone: 'market',  note: 'glow de mercado tropical' }
+];
+
+// Subtle human-scale clusters (people / tables / benches) anchored by lot fractions.
+export const HUMAN_CLUSTERS = [
+  { kind: 'table',  cf: 0.60, tf: 0.42, n: 6, spread: 9 },
+  { kind: 'person', cf: 0.60, tf: 0.42, n: 10, spread: 11 },
+  { kind: 'person', cf: 0.55, tf: 0.30, n: 6, spread: 8 },
+  { kind: 'person', cf: 0.66, tf: 0.46, n: 4, spread: 5 },
+  { kind: 'bench',  cf: 0.40, tf: 0.13, n: 3, spread: 9 },
+  { kind: 'person', cf: 0.34, tf: 0.11, n: 3, spread: 5 }
+];
+
+// Atmospheric tone palette (used by both journey stops and experience layers).
+export const TONES = {
+  warm: '#ffcaa0', day: null, market: '#ffb070', industrial: '#9fb6c8',
+  sunset: '#ff8a5e', night: '#0a1a3a', wellness: '#9fe0c0'
+};
