@@ -1,0 +1,18 @@
+{
+  "name": "Lote Logos — Kairos Parador",
+  "source": "Logos.kml (Google Earth, polígono trazado por el propietario)",
+  "crs": "EPSG:4326 (WGS84, lon/lat)",
+  "disclaimer": "Polígono de referencia. No sustituye levantamiento topográfico georreferenciado. No contiene información normativa.",
+  "reference_point": { "lat": 3.73155, "lon": -76.32356 },
+  "polygon": [
+    { "id": "A", "lon": -76.32341647097293, "lat": 3.731094179667487 },
+    { "id": "B", "lon": -76.32351406605405, "lat": 3.731887640145794 },
+    { "id": "C", "lon": -76.32371668283456, "lat": 3.731837248990664 },
+    { "id": "D", "lon": -76.32357451266348, "lat": 3.731436431433172 }
+  ],
+  "context": {
+    "road": "Troncal de Occidente / Ruta 25 (costado oriental)",
+    "railway": "Corredor férreo del Pacífico, inactivo (costado oriental)",
+    "municipality": "Guacarí, Valle del Cauca, Colombia"
+  }
+}
