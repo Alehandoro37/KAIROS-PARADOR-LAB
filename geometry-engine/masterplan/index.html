@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masterplan Blueprint V1 — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
+  <link rel="stylesheet" href="../../web/css/lab.css">
+  <style>
+    /* Page-specific styles (lab.css reused untouched). */
+    .stage{position:relative;padding:24px}
+    #mpCanvas{width:100%;height:calc(100vh - 48px);background:#061526;border:1px solid rgba(143,229,255,.18);border-radius:22px}
+    .prelim-chip{display:inline-block;margin:10px 0 4px;padding:6px 10px;border:1px solid #ff9e6b;border-radius:999px;color:#ffd9c9;background:rgba(255,158,107,.16);font:11px var(--mono);letter-spacing:.04em}
+    .warnbar{position:absolute;left:44px;right:44px;top:40px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:10px 14px;font:700 12px var(--mono);letter-spacing:.06em;text-align:center;z-index:500}
+    .mpmetrics{position:absolute;right:44px;bottom:40px;max-width:340px;background:rgba(3,16,29,.86);border:1px solid rgba(143,229,255,.18);border-radius:16px;padding:14px;font:12px var(--mono);color:#cbeeff;z-index:500}
+    .mpmetrics h4{margin:0 0 8px;color:var(--gold)}
+    .mini{width:100%;border-collapse:collapse;margin-top:8px}
+    .mini td{padding:3px 0;border-bottom:1px solid rgba(143,229,255,.10)}
+    .mini .num{color:var(--gold);text-align:right;white-space:nowrap}
+    .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+    .lyr{display:flex;align-items:center;gap:4px;color:#b9e5ff;font-size:12px;margin:5px 0}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .reset{width:100%}
+  </style>
+</head>
+<body>
+
+<div class="engine-layout">
+
+  <!-- ============ panel de control ============ -->
+  <aside class="panel">
+    <a class="back" href="../../web/index.html">← Linear Station Lab</a>
+    <h1>Masterplan<br>Blueprint</h1>
+    <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — NO DISEÑO FINAL</p>
+    <p class="fineprint">Distribución espacial <b>conceptual</b> de los 17 elementos del programa,
+      <b>paramétrica y relativa</b> al polígono de <b>data/lot.json</b> (se reubica si el lote cambia).
+      Los objetos fuera del polígono se marcan <b>CONFLICTIVOS</b>. No es arquitectura, no es catastro.</p>
+
+    <fieldset>
+      <legend>Capas</legend>
+      <div id="mpLayers"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Vista / Export</legend>
+      <button class="btn reset" id="mpReset" type="button">Reset view</button>
+      <div class="row2" style="margin-top:10px">
+        <button class="btn primary" id="mpExportJson" type="button">Export JSON</button>
+        <button class="btn primary" id="mpExportPng" type="button">Export PNG</button>
+      </div>
+      <p class="fineprint">JSON: versión, fecha, centroide, objetos, áreas aprox, conflictos, fuente y warnings.
+        PNG: render conceptual del canvas. Áreas/coords con precisión honesta (~metros).</p>
+    </fieldset>
+
+    <p class="fineprint">Fuente: <b>data/lot.json</b> (no se modifica) + contexto <b>data/osm/osm-context-seed.json</b>.
+      Contexto © OpenStreetMap contributors.</p>
+  </aside>
+
+  <!-- ============ escenario ============ -->
+  <div class="stage">
+    <canvas id="mpCanvas" aria-label="Render conceptual del masterplan sobre el lote Logos"></canvas>
+    <div class="warnbar">NO APTO PARA USO LEGAL / CATASTRAL / CONSTRUCCIÓN — PRELIMINAR CONCEPTUAL</div>
+    <div class="mpmetrics" id="mpMetrics"><h4>Áreas aproximadas</h4>Cargando lot.json…</div>
+  </div>
+
+</div>
+
+<script type="module" src="masterplan.js"></script>
+</body>
+</html>
