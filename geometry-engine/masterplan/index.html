@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Masterplan Blueprint V1 — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
+  <title>Masterplan Blueprint V2 — Experiential — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
   <link rel="stylesheet" href="../../web/css/lab.css">
   <style>
     /* Page-specific styles (lab.css reused untouched). */
@@ -17,7 +17,11 @@
     .mini td{padding:3px 0;border-bottom:1px solid rgba(143,229,255,.10)}
     .mini .num{color:var(--gold);text-align:right;white-space:nowrap}
     .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
-    .lyr{display:flex;align-items:center;gap:4px;color:#b9e5ff;font-size:12px;margin:5px 0}
+    .lyr{display:flex;align-items:center;gap:4px;color:#b9e5ff;font-size:12px;margin:4px 0 4px 10px}
+    .grpbox{margin:10px 0;padding:8px 0;border-top:1px solid rgba(143,229,255,.12)}
+    .grp{display:flex;align-items:center;gap:6px;color:var(--gold);font:11px var(--mono);letter-spacing:.06em}
+    .grphdr{display:block;color:var(--gold);font:11px var(--mono);letter-spacing:.06em;margin-bottom:4px}
+    .mood{display:flex;align-items:center;gap:6px;color:#cbeeff;font-size:12px;margin:5px 0}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
   </style>
@@ -29,15 +33,21 @@
   <!-- ============ panel de control ============ -->
   <aside class="panel">
     <a class="back" href="../../web/index.html">← Linear Station Lab</a>
-    <h1>Masterplan<br>Blueprint</h1>
-    <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — NO DISEÑO FINAL</p>
-    <p class="fineprint">Distribución espacial <b>conceptual</b> de los 17 elementos del programa,
-      <b>paramétrica y relativa</b> al polígono de <b>data/lot.json</b> (se reubica si el lote cambia).
-      Los objetos fuera del polígono se marcan <b>CONFLICTIVOS</b>. No es arquitectura, no es catastro.</p>
+    <h1>Masterplan<br>Blueprint <span style="color:var(--gold)">V2</span></h1>
+    <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — EXPERIENCIAL · NO DISEÑO FINAL</p>
+    <p class="fineprint">Rediseño <b>experiencial</b> tipo eco-retreat tropical: llegada, plaza orgánica,
+      pabellones, promenade, paisaje y atmósfera. <b>Paramétrico y relativo</b> al polígono de
+      <b>data/lot.json</b> (se reubica si el lote cambia); las formas fuera del polígono se marcan
+      <b>CONFLICTIVAS</b>. No es arquitectura, no es catastro.</p>
 
     <fieldset>
-      <legend>Capas</legend>
+      <legend>Capas (toggles por grupo)</legend>
       <div id="mpLayers"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Mood legend</legend>
+      <div id="mpMood"></div>
     </fieldset>
 
     <fieldset>
