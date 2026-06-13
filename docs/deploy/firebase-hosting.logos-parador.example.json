@@ -1,0 +1,49 @@
+{
+  "_comment_see": "docs/deploy/firebase-dry-run-checklist.md — JSON has no comments; this key is ignored by Firebase but points to the explanation.",
+  "_note": "EXAMPLE ONLY. Not an active config. No deploy is run from this repo. public='build' serves build/external/landing/logos-parador/** at /external/landing/logos-parador/**.",
+  "hosting": {
+    "public": "build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "appAssociation": "NONE",
+    "cleanUrls": false,
+    "trailingSlash": true,
+    "redirects": [],
+    "rewrites": [],
+    "headers": [
+      {
+        "source": "**/vendor/leaflet/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800, immutable" }
+        ]
+      },
+      {
+        "source": "**/*.@(js|mjs|css)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=86400" }
+        ]
+      },
+      {
+        "source": "**/*.@(png|jpg|jpeg|gif|svg|webp|ico)",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800" }
+        ]
+      },
+      {
+        "source": "**/*.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=300" }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ]
+  }
+}
