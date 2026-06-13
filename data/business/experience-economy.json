@@ -1,0 +1,28 @@
+{
+  "schema": "kairos.experience-economy/v1",
+  "status": "CONCEPTUAL — marco experiencial ilustrativo, no financiero.",
+  "pillars": [
+    { "id": "gastronomy",  "label": "Gastronomía",      "essence": "Sabor tropical, mercado, sobremesa." },
+    { "id": "wellness",    "label": "Wellness",         "essence": "Calma, naturaleza, pausa." },
+    { "id": "ecoretreat",  "label": "Eco-retreat",      "essence": "Pernocta entre canopy y jardín." },
+    { "id": "railway",     "label": "Railway identity", "essence": "Memoria férrea, mirador, andén." },
+    { "id": "hospitality", "label": "Hospitality",      "essence": "Servicio cálido, anfitrionazgo." }
+  ],
+  "experienceDensityByZone": [
+    { "zone": "Plaza Logos",   "level": "Alta" },
+    { "zone": "Railway edge",  "level": "Media-Alta" },
+    { "zone": "Pavilions",     "level": "Alta" },
+    { "zone": "Wellness grove", "level": "Media" },
+    { "zone": "Parqueo velado", "level": "Baja" }
+  ],
+  "stayDurationConceptual": {
+    "day-tripper": "1–3 h",
+    "experience-seeker": "3–6 h",
+    "overnight": "12–24 h (futuro)"
+  },
+  "visitorFlowConceptual": {
+    "pattern": "Picos conceptuales en tarde/atardecer y noche; mañana orientada a wellness.",
+    "note": "Patrón ILUSTRATIVO, no un aforo ni una medición."
+  },
+  "disclaimer": "Conceptual operational visualization — not financial advice or investment solicitation."
+}

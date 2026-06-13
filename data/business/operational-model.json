@@ -1,0 +1,19 @@
+{
+  "schema": "kairos.operational-model/v1",
+  "status": "CONCEPTUAL — ilustrativo. NO es asesoría financiera ni solicitud de inversión.",
+  "model": "Híbrido experiencial: gastronomía + wellness + eco-stay + retail + identidad ferroviaria.",
+  "verticals": [
+    { "id": "food",     "label": "Food / Gastronomía", "role": "Ancla diurna y nocturna: plaza, pabellones, railway café.", "mixWeight": 34, "visitorAppeal": "Alto",       "dayparts": ["almuerzo", "tarde", "noche"], "metrics": { "visitorFlow": 80, "stayHours": 1.5, "experienceDensity": 3 } },
+    { "id": "wellness", "label": "Wellness",            "role": "Calma y bienestar: grove, jardines, futura expansión.",    "mixWeight": 18, "visitorAppeal": "Medio-Alto", "dayparts": ["mañana", "tarde"],            "metrics": { "visitorFlow": 45, "stayHours": 2.5, "experienceDensity": 2 } },
+    { "id": "ecostay",  "label": "Eco-Stay",            "role": "Estancia: eco-suites futuras, pernocta conceptual.",       "mixWeight": 22, "visitorAppeal": "Medio",      "dayparts": ["noche", "mañana"],            "metrics": { "visitorFlow": 30, "stayHours": 12.0, "experienceDensity": 2 } },
+    { "id": "retail",   "label": "Retail / Market",     "role": "Mercado tropical, souvenirs, producto local.",            "mixWeight": 14, "visitorAppeal": "Medio",      "dayparts": ["tarde", "noche"],             "metrics": { "visitorFlow": 55, "stayHours": 0.8, "experienceDensity": 2 } },
+    { "id": "railway",  "label": "Railway Identity",    "role": "Identidad y placemaking: mirador, lounge lineal, memoria férrea.", "mixWeight": 12, "visitorAppeal": "Alto", "dayparts": ["tarde", "noche"],         "metrics": { "visitorFlow": 60, "stayHours": 1.0, "experienceDensity": 3 } }
+  ],
+  "conceptualIndices": {
+    "visitorFlow":      { "unit": "índice conceptual 0–100", "note": "patrón ilustrativo de afluencia relativa, NO un conteo real" },
+    "stayDuration":     { "unit": "horas conceptuales",      "note": "rango ilustrativo de permanencia, NO un dato medido" },
+    "experienceDensity":{ "unit": "nivel conceptual",        "note": "riqueza de experiencias simultáneas por zona" }
+  },
+  "note": "mixWeight = peso del MIX EXPERIENCIAL (ponderación de diseño, conceptual), NO una proyección de ingresos. Suma 100 por convención de diseño.",
+  "disclaimer": "Conceptual operational visualization — not financial advice or investment solicitation."
+}

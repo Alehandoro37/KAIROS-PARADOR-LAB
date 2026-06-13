@@ -21,7 +21,7 @@
  * Output goes to build/ (git-ignored). The SOURCE repo is never modified, so GitHub
  * Pages is unaffected. No deploy, no Firebase CLI is run here. */
 
-import { rmSync, mkdirSync, cpSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { rmSync, mkdirSync, cpSync, writeFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { dirname, join, relative } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -48,9 +48,12 @@ const redirect = (to, title) =>
   `<p>Redirigiendo a <a style="color:#8fe5ff" href="${to}">${title}</a>…</p></body></html>\n`;
 const routePage = (sub, to, title) => { mkdirSync(join(OUT, sub), { recursive: true }); writeFileSync(join(OUT, sub, 'index.html'), redirect(to, title)); };
 
-// Public landing (commercial entry) — committed source dir (index.html + favicon.svg),
-// copied as the root of the route. Its CTAs point at the internal redirect routes below.
+// Public landing (commercial entry) — committed source dir, copied as the root of the
+// route. This recursive copy ALSO ships the `investment/` sub-route (Operational
+// Intelligence Layer); its dashboard (web/js/investment-dashboard.js) and conceptual
+// data (data/business/*.json) arrive via the web/ and data/ mirrors above.
 cpSync(join(ROOT, 'external', 'landing', 'logos-parador'), OUT, { recursive: true });
+if (!existsSync(join(OUT, 'investment', 'index.html'))) console.warn('WARN: investment/ route missing from build');
 routePage('masterplan', '../geometry-engine/masterplan/', 'Masterplan Blueprint V3.1');
 routePage('map', '../geometry-engine/map-calibration/', 'Map Calibration + OSM Context');
 routePage('journey', '../geometry-engine/masterplan/?journey=1&auto=1', 'Visitor Journey (cinematic)');
@@ -65,6 +68,6 @@ function tree(dir, prefix = '', depth = 0, max = 2) {
   }
 }
 console.log('Built external route tree at:', relative(ROOT, OUT));
-console.log('Public routes → /external/landing/logos-parador/{ , masterplan/, map/, journey/}');
+console.log('Public routes → /external/landing/logos-parador/{ , masterplan/, map/, journey/, investment/}');
 console.log('---');
 tree(OUT);

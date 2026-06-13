@@ -1,0 +1,13 @@
+{
+  "schema": "kairos.phases/v1",
+  "status": "CONCEPTUAL — secuencia ilustrativa, SIN fechas ni cifras financieras.",
+  "phases": [
+    { "id": "p0", "label": "Fase 0 · Concepto & sitio",     "scope": ["Lote KML", "Masterplan conceptual", "Calibración de mapa"], "progress": 100, "state": "Definición avanzada (conceptual)" },
+    { "id": "p1", "label": "Fase 1 · Plaza & Food",          "scope": ["Plaza Logos", "Pabellones gastronómicos", "Parqueo velado"], "progress": 35, "state": "Conceptual" },
+    { "id": "p2", "label": "Fase 2 · Railway & Lounge",      "scope": ["Railway café", "Mirador / viewing edge", "Sunset lounge"],  "progress": 15, "state": "Conceptual" },
+    { "id": "p3", "label": "Fase 3 · Wellness & Eco-Stay",   "scope": ["Wellness grove", "Eco-suites", "Jardines"],                 "progress": 5,  "state": "Reserva conceptual" },
+    { "id": "p4", "label": "Fase 4 · Expansión",             "scope": ["Wellness expansion", "Suelo adicional"],                    "progress": 0,  "state": "Reserva conceptual" }
+  ],
+  "note": "progress = avance CONCEPTUAL de definición de diseño (0–100), NO ejecución física, NO compromiso, NO calendario.",
+  "disclaimer": "Conceptual operational visualization — not financial advice or investment solicitation."
+}

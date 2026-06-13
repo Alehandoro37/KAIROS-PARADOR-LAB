@@ -52,7 +52,10 @@ const required = [
   // favicons (avoid favicon 404 on the public pages)
   'favicon.svg', 'geometry-engine/masterplan/favicon.svg', 'geometry-engine/map-calibration/favicon.svg',
   // vendored brand logo (no hotlink to the tokenized Firebase URL)
-  'assets/logo.jpg', 'geometry-engine/masterplan/assets/logo.jpg', 'geometry-engine/map-calibration/assets/logo.jpg'
+  'assets/logo.jpg', 'geometry-engine/masterplan/assets/logo.jpg', 'geometry-engine/map-calibration/assets/logo.jpg',
+  // Operational Intelligence Layer (investment route + conceptual business layer)
+  'investment/index.html', 'web/js/investment-dashboard.js',
+  'data/business/operational-model.json', 'data/business/phases.json', 'data/business/experience-economy.json'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
@@ -70,6 +73,23 @@ required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missi
   /href=["']assets\/logo\.jpg["']/i.test(s) ? ok(`${label}: brand logo referenced`) : fail(`${label}: missing brand logo`);
   /rel=["']apple-touch-icon["']/i.test(s) ? ok(`${label}: apple-touch-icon`) : fail(`${label}: missing apple-touch-icon`);
   /property=["']og:image["'][^>]*content=["']https:\/\//i.test(s) ? ok(`${label}: og:image (absolute)`) : fail(`${label}: missing absolute og:image`);
+});
+
+// Operational Intelligence Layer — investment route + cross-nav + disclaimer
+const invPath = join(BASE, 'investment', 'index.html');
+if (!existsSync(invPath)) { fail('missing investment route'); }
+else {
+  const I = readFileSync(invPath, 'utf8');
+  /not financial advice|no es asesoría financiera/i.test(I) ? ok('investment: prominent disclaimer') : fail('investment: missing disclaimer');
+  /src=["']\.\.\/web\/js\/investment-dashboard\.js["']/i.test(I) ? ok('investment: dashboard module referenced') : fail('investment: missing dashboard module ref');
+  /id=["']oiVerticals["']/.test(I) && /id=["']oiPhases["']/.test(I) ? ok('investment: dashboard containers') : fail('investment: missing dashboard containers');
+}
+// cross-navigation: every public page links to /investment/
+[['index.html', './investment/'], ['geometry-engine/masterplan/index.html', '../../investment/'],
+ ['geometry-engine/map-calibration/index.html', '../../investment/'], ['investment/index.html', './']
+].forEach(([f, href]) => {
+  const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
+  readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → investment`) : fail(`cross-nav: ${f} missing investment link (${href})`);
 });
 
 // public landing (commercial entry) — root index.html
@@ -121,7 +141,8 @@ const patterns = [
   { name: 'no localhost references', re: /localhost/i },
   { name: 'no file:// references', re: /file:\/\// },
   { name: 'no Google API keys (AIza…)', re: /AIza[0-9A-Za-z_\-]{35}/ },
-  { name: 'no embedded "firebase deploy"', re: /firebase\s+deploy/i }
+  { name: 'no embedded "firebase deploy"', re: /firebase\s+deploy/i },
+  { name: 'no real analytics/tracking', re: /gtag\(|googletagmanager|google-analytics|mixpanel|segment\.com|hotjar|fbq\(|connect\.facebook\.net/i }
 ];
 for (const c of patterns) {
   const hits = scan.filter(f => c.re.test(readFileSync(f, 'utf8'))).map(f => relative(BASE, f));
