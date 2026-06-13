@@ -10,7 +10,14 @@
     .stage{position:relative;padding:24px}
     #mpCanvas{width:100%;height:calc(100vh - 48px);background:#061526;border:1px solid rgba(143,229,255,.18);border-radius:22px}
     .prelim-chip{display:inline-block;margin:10px 0 4px;padding:6px 10px;border:1px solid #ff9e6b;border-radius:999px;color:#ffd9c9;background:rgba(255,158,107,.16);font:11px var(--mono);letter-spacing:.04em}
-    .warnbar{position:absolute;left:44px;right:44px;top:40px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:10px 14px;font:700 12px var(--mono);letter-spacing:.06em;text-align:center;z-index:500}
+    /* Discrete legal note (relocated from the big centre bar — present, not removed). */
+    .legalnote{position:absolute;left:44px;bottom:40px;max-width:46%;color:#9db4c4;font:10px var(--mono);letter-spacing:.04em;line-height:1.4;z-index:500;opacity:.78}
+    .legalnote b{color:#ffd9c9;font-weight:700}
+    /* Floating zoom controls (premium, top-right of the stage). */
+    .zoomctl{position:absolute;right:44px;top:40px;display:flex;flex-direction:column;gap:8px;z-index:600}
+    .zoomctl button{width:40px;height:40px;border-radius:12px;border:1px solid rgba(143,229,255,.30);background:rgba(3,16,29,.82);color:#eaf6ff;font:600 18px var(--mono);cursor:pointer;backdrop-filter:blur(8px)}
+    .zoomctl button:hover{border-color:var(--gold);color:#fff}
+    .zoomctl .rst{font-size:12px;letter-spacing:.02em}
     .mpmetrics{position:absolute;right:44px;bottom:40px;max-width:340px;background:rgba(3,16,29,.86);border:1px solid rgba(143,229,255,.18);border-radius:16px;padding:14px;font:12px var(--mono);color:#cbeeff;z-index:500}
     .mpmetrics h4{margin:0 0 8px;color:var(--gold)}
     .mini{width:100%;border-collapse:collapse;margin-top:8px}
@@ -87,7 +94,12 @@
   <!-- ============ escenario ============ -->
   <div class="stage">
     <canvas id="mpCanvas" aria-label="Render conceptual del masterplan sobre el lote Logos"></canvas>
-    <div class="warnbar">NO APTO PARA USO LEGAL / CATASTRAL / CONSTRUCCIÓN — PRELIMINAR CONCEPTUAL</div>
+    <div class="zoomctl" role="group" aria-label="Controles de zoom">
+      <button id="mpZoomIn" type="button" title="Zoom +" aria-label="Zoom más">+</button>
+      <button id="mpZoomOut" type="button" title="Zoom −" aria-label="Zoom menos">−</button>
+      <button id="mpZoomReset" class="rst" type="button" title="Reset view" aria-label="Reset view">⤢</button>
+    </div>
+    <div class="legalnote">PRELIMINAR · CONCEPTUAL — <b>no apto para uso legal / catastral / construcción</b>. No es topografía ni catastro.</div>
     <div class="mpmetrics" id="mpMetrics"><h4>Áreas aproximadas</h4>Cargando lot.json…</div>
   </div>
 

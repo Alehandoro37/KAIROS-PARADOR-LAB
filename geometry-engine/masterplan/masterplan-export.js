@@ -28,7 +28,7 @@ function serialize(e) {
 }
 
 export function buildExportObject(state) {
-  const { frame, centroidLL, lotAreaM2, elements, areasByLayer, experience = {}, journey = {} } = state;
+  const { frame, centroidLL, lotAreaM2, elements, areasByLayer, experience = {}, journey = {}, cameraZoom = 1 } = state;
   const byId = Object.fromEntries(elements.map(e => [e.id, e]));
   const prog = elements.filter(e => e.group === 'program' && e.kind !== 'lot' && e.kind !== 'context');
   const byGroup = (g) => elements.filter(e => e.group === g).map(serialize);
@@ -38,7 +38,7 @@ export function buildExportObject(state) {
 
   return {
     schema: 'kairos.masterplan/v3',
-    version: 'Masterplan Blueprint V3 — visitor journey cinematic experience',
+    version: 'Masterplan Blueprint V3.1 — visitor journey + zoom controls',
     status: 'PRELIMINAR CONCEPTUAL',
     conceptual_only: true,
     generatedAt: new Date().toISOString(),
@@ -60,6 +60,7 @@ export function buildExportObject(state) {
     })),
     experience_layers: EXPERIENCE_LAYERS.map(l => ({ key: l.key, label: l.label, tone: l.tone, active: !!experience[l.key] })),
     atmosphere_settings: { activeExperience, humanScale: experience.humans !== false, journeyActive: !!journey.active, journeyStop: journey.active ? (journey.i + 1) : null, fogDepth: true, sunsetTones: true },
+    camera: { zoom: Math.round(cameraZoom * 100) / 100 },
     view_corridors: elements.filter(e => e.kind === 'wedge').map(serialize),
     identity_zones: elements.filter(e => e.identity).map(serialize),
     areasByLayerApproxM2: layerAreas,

@@ -40,8 +40,10 @@ export function label(ctx, x, y, text, color = '#eaf6ff') {
   ctx.fillText(text, x, y); ctx.restore();
 }
 
+// Subtle, premium watermark — present but non-aggressive (small, low alpha, muted).
 export function watermark(ctx, W, H, text) {
-  ctx.save(); ctx.translate(W / 2, H / 2); ctx.rotate(-Math.PI / 9);
-  ctx.font = '700 22px ui-monospace, monospace'; ctx.fillStyle = 'rgba(255,158,107,.15)'; ctx.textAlign = 'center';
+  ctx.save(); ctx.translate(W / 2, H * 0.92);
+  ctx.font = '600 12px ui-monospace, monospace'; ctx.fillStyle = 'rgba(180,210,230,.10)';
+  ctx.textAlign = 'center'; ctx.letterSpacing = '2px';
   ctx.fillText(text, 0, 0); ctx.restore();
 }

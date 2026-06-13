@@ -66,6 +66,23 @@ Eco-hospitality / tropical retreat / railway heritage / boutique roadside / cine
 diagram. Tonos cálidos, glow, vegetación; **sin** ingeniería fría, CAD duro, colores agresivos
 ni UI corporativa. Todo marcado PRELIMINAR · CONCEPTUAL; banner y marca de agua permanentes.
 
+## 5.1 V3.1 — Zoom controls + presentation cleanup
+
+- **Controles de zoom** (cluster flotante premium, arriba-derecha del stage): **Zoom +** ·
+  **Zoom −** · **Reset view** (⤢). Actúan sobre la cámara con transición suave y **límites**
+  `[0.8, 4.0]` (`camera-utils.ZLIMIT`/`clampZoom`); **Reset** vuelve al **encuadre completo**
+  del lote (`homeView`, zoom 1). Compatible con **Journey** (el zoom manual sólo cambia el
+  encuadre; Prev/Next/Auto reencuadran cada parada), con **resize** y con **PNG** (captura el
+  zoom actual). Sigue siendo recorrido guiado: **sin pan/zoom libre complejo**.
+- **Disclaimer reubicado (no eliminado):** se quitó la barra grande central. La advertencia
+  legal vive ahora como **nota discreta** abajo-izquierda del stage (*“no apto para uso legal /
+  catastral / construcción”*), el **chip** del panel mantiene *PRELIMINAR · CONCEPTUAL*, y la
+  **marca de agua** es sutil/premium. El **warning legal completo permanece en el export JSON**
+  (`warnings[0]`) y en este doc. Presentación más limpia/arquitectónica, advertencia **discreta
+  pero presente**.
+- **Export:** el JSON añade `camera.zoom` (zoom actual) y conserva `conceptual_only: true` +
+  `warnings` legales; el PNG refleja el zoom y overlays actuales.
+
 ## 6. Aislamiento
 
 No toca `data/lot.json`, ni `geometry-engine/v2/`, ni `geometry-engine/map-calibration/`. Solo

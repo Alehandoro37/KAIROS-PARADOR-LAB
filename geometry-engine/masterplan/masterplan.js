@@ -11,7 +11,7 @@ import { trace, tracePoly, hash, rng } from './bezier-path-utils.js';
 import { drawPalm, stippleFoliage, drawPerson, drawTable, drawBench } from './landscape-symbols.js';
 import { glowNode, fireNode, viewCorridor, sunsetWash, nightWash, ambientWash, fogDepth, canopyShadow, pathwayGlow, spotlight } from './atmosphere-renderer.js';
 import { background, vignette, deckTexture, label, watermark, orderIndex } from './composition-grid.js';
-import { makeCamera, focusCamera, sampleCamera, cameraBox, homeView, ZOOM } from './camera-utils.js';
+import { makeCamera, focusCamera, sampleCamera, cameraBox, homeView, ZOOM, clampZoom } from './camera-utils.js';
 
 const LOT_URL = '../../data/lot.json';
 const SEED_URL = '../../data/osm/osm-context-seed.json';
@@ -231,7 +231,7 @@ function draw() {
   fogDepth(ctx, W, H);
   if (journey.active) drawJourneyOverlay(W, H);
   vignette(ctx, W, H);
-  watermark(ctx, W, H, 'PRELIMINAR · CONCEPTUAL — NO CATASTRO');
+  watermark(ctx, W, H, 'KAIROS PARADOR · CONCEPTUAL · PRELIMINAR');
   updatePanel();
 }
 function resize() {
@@ -268,6 +268,15 @@ function updateJourneyUI() {
   const st = $('mpJourneyState'); if (st) st.textContent = journey.active ? `${journey.i + 1} / 9 · ${JOURNEY[journey.i].title}` : 'Journey detenido';
   const tg = $('mpJourneyToggle'); if (tg) tg.textContent = journey.active ? 'Stop Journey' : 'Start Journey';
 }
+
+// ---- zoom controls (manual; compatible with Journey, no free pan) ----------
+// Smoothly zoom about the current view centre, clamped to [min, max]. Manual zoom
+// only changes the camera framing — Prev/Next/Auto still re-frame each stop, so the
+// Journey is never broken by it.
+function zoomTo(z, dur) { focusCamera(camera, { cx: camera.cur.cx, cy: camera.cur.cy, zoom: clampZoom(z) }, dur, performance.now()); ensureLoop(); }
+function zoomIn() { zoomTo(camera.cur.zoom * 1.25, 280); }
+function zoomOut() { zoomTo(camera.cur.zoom / 1.25, 280); }
+function resetView() { focusCamera(camera, homeView(baseBox), 600, performance.now()); ensureLoop(); }
 
 // ---- panel / legend / UI ---------------------------------------------------
 function updatePanel() {
@@ -316,8 +325,11 @@ function buildControls() {
   $('mpNext').addEventListener('click', () => { if (journey.active) goStop(journey.i + 1); });
   $('mpAutoplay').addEventListener('change', e => { journey.autoplay = e.target.checked; if (journey.active) { journey.lastAdvance = performance.now(); ensureLoop(); } });
 
-  $('mpReset').addEventListener('click', () => { focusCamera(camera, homeView(baseBox), 700, performance.now()); ensureLoop(); });
-  $('mpExportJson').addEventListener('click', () => exportJSON({ frame, centroidLL: { lat: lat0, lon: lon0 }, lotAreaM2, elements, areasByLayer, experience, journey }));
+  $('mpReset').addEventListener('click', resetView);
+  $('mpZoomIn').addEventListener('click', zoomIn);
+  $('mpZoomOut').addEventListener('click', zoomOut);
+  $('mpZoomReset').addEventListener('click', resetView);
+  $('mpExportJson').addEventListener('click', () => exportJSON({ frame, centroidLL: { lat: lat0, lon: lon0 }, lotAreaM2, elements, areasByLayer, experience, journey, cameraZoom: camera.cur.zoom }));
   $('mpExportPng').addEventListener('click', () => exportPNG(canvas));
   updateJourneyUI();
 }

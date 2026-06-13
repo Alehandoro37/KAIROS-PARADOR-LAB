@@ -8,6 +8,9 @@ export const lerp = (a, b, t) => a + (b - a) * t;
 
 // Soft zoom presets (multipliers over the home/whole-lot framing).
 export const ZOOM = { home: 1, wide: 1.5, stop: 2.1, close: 2.6 };
+// Manual-zoom limits (Reset returns to ZOOM.home = whole-lot framing).
+export const ZLIMIT = { min: 0.8, max: 4.0 };
+export const clampZoom = (z) => Math.min(ZLIMIT.max, Math.max(ZLIMIT.min, z));
 
 export function makeCamera(home) {
   return { home: { ...home }, cur: { ...home }, from: { ...home }, to: { ...home }, t0: 0, dur: 0, animating: false };
