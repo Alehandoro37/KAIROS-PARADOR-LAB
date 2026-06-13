@@ -32,7 +32,7 @@
   const state = {
     poly: null,          // current polygons doc (seed/localStorage shape)
     active: 'usable',    // key being edited
-    editMode: false, addMode: false,
+    editMode: false, addMode: false, hidden: new Set(),
     show: { lot: true, usable: true, rail: true, restricted: true, layout: false, circulation: false, landscape: false },
     groups: {}, modulePlacements: []
   };
@@ -53,9 +53,9 @@
     if (!state.poly) return null;
     if (key === 'usable') return state.poly.usable_area_polygon;
     if (key === 'rail') return state.poly.rail_side_opportunity_polygon;
-    if (key === 'frontage') return state.poly.frontage_zone.polygon;
-    if (key === 'service') return state.poly.service_zone.polygon;
-    if (key.startsWith('rz:')) { const z = state.poly.restricted_zones.find(r => r.id === key.slice(3)); return z && z.polygon; }
+    if (key === 'frontage') return state.poly.frontage_zone && state.poly.frontage_zone.polygon;
+    if (key === 'service') return state.poly.service_zone && state.poly.service_zone.polygon;
+    if (key.startsWith('rz:')) { const z = (state.poly.restricted_zones || []).find(r => r.id === key.slice(3)); return z && z.polygon; }
     return null;
   }
 
@@ -73,24 +73,25 @@
 
   function render() {
     if (!state.poly) return;
-    // original lot reference (read-only)
+    const hid = (k) => state.hidden.has(k);   // per-polygon hide (delete-fix V1)
+    // original lot reference (read-only — can be hidden, never deleted)
     clearGroup('lot');
-    if (lotRef && lotRef.length) state.groups.lot.addLayer(poly(lotRef, COLORS.lot, { weight: 2, dashArray: '2 5', fillOpacity: 0.04 }).bindTooltip('Lote original (lot.json) — PRELIMINAR'));
+    if (lotRef && lotRef.length && !hid('lot')) state.groups.lot.addLayer(poly(lotRef, COLORS.lot, { weight: 2, dashArray: '2 5', fillOpacity: 0.04 }).bindTooltip('Original lot from lot.json — read-only'));
     // usable
     clearGroup('usable');
-    state.groups.usable.addLayer(poly(state.poly.usable_area_polygon, COLORS.usable, { fillOpacity: 0.14 }).bindTooltip('Área utilizable (editable) — PRELIMINAR'));
+    if (state.poly.usable_area_polygon && !hid('usable')) state.groups.usable.addLayer(poly(state.poly.usable_area_polygon, COLORS.usable, { fillOpacity: 0.14 }).bindTooltip('Área utilizable (editable) — PRELIMINAR'));
     // rail opportunity + axis
     clearGroup('rail');
-    state.groups.rail.addLayer(poly(state.poly.rail_side_opportunity_polygon, COLORS.rail, { dashArray: '8 6', fillOpacity: 0.08 })
+    if (state.poly.rail_side_opportunity_polygon && !hid('rail')) state.groups.rail.addLayer(poly(state.poly.rail_side_opportunity_polygon, COLORS.rail, { dashArray: '8 6', fillOpacity: 0.08 })
       .bindTooltip(state.poly.rail_opportunity_label || 'Zona de oportunidad — validar propiedad/servidumbres'));
-    if (state.poly.rail_axis_hint && state.poly.rail_axis_hint.line)
+    if (state.poly.rail_axis_hint && state.poly.rail_axis_hint.line && !hid('rail'))
       state.groups.rail.addLayer(L.polyline(state.poly.rail_axis_hint.line, { color: COLORS.axis, weight: 3, dashArray: '10 8', opacity: .8 }).bindTooltip(state.poly.rail_axis_hint.label || 'Eje férreo (conceptual)'));
     // restricted + frontage + service
     clearGroup('restricted');
-    (state.poly.restricted_zones || []).forEach(z => state.groups.restricted.addLayer(
-      poly(z.polygon, COLORS.restricted, { dashArray: '4 4', fillOpacity: 0.16 }).bindTooltip(z.label || 'No-build (preliminar)')));
-    if (state.poly.frontage_zone) state.groups.restricted.addLayer(poly(state.poly.frontage_zone.polygon, COLORS.frontage, { fillOpacity: 0.1 }).bindTooltip(state.poly.frontage_zone.label));
-    if (state.poly.service_zone) state.groups.restricted.addLayer(poly(state.poly.service_zone.polygon, COLORS.service, { fillOpacity: 0.1 }).bindTooltip(state.poly.service_zone.label));
+    (state.poly.restricted_zones || []).forEach(z => { if (!hid('rz:' + z.id)) state.groups.restricted.addLayer(
+      poly(z.polygon, COLORS.restricted, { dashArray: '4 4', fillOpacity: 0.16 }).bindTooltip(z.label || 'No-build (preliminar)')); });
+    if (state.poly.frontage_zone && !hid('frontage')) state.groups.restricted.addLayer(poly(state.poly.frontage_zone.polygon, COLORS.frontage, { fillOpacity: 0.1 }).bindTooltip(state.poly.frontage_zone.label));
+    if (state.poly.service_zone && !hid('service')) state.groups.restricted.addLayer(poly(state.poly.service_zone.polygon, COLORS.service, { fillOpacity: 0.1 }).bindTooltip(state.poly.service_zone.label));
 
     renderLayout();
     renderVerts();
@@ -106,7 +107,8 @@
     clearGroup('layout'); clearGroup('circulation'); clearGroup('landscape');
     state.modulePlacements = [];
     if (!catalog || !catalog.modules) return;
-    const U = state.poly.usable_area_polygon, ub = bbox(U), vb = catalog.viewBox || { width: 1000, height: 1500 };
+    const U = state.poly.usable_area_polygon; if (!U) return;   // usable may be deleted
+    const ub = bbox(U), vb = catalog.viewBox || { width: 1000, height: 1500 };
     const fz = state.poly.frontage_zone, sz = state.poly.service_zone, op = state.poly.rail_side_opportunity_polygon;
     let outside = 0;
 
@@ -269,7 +271,33 @@
       centroidOf: (key) => { const r = ring(key); return r ? centroid(r) : null; },
       movePolygon: (key, dLat, dLon) => { const r = ring(key); if (r) { r.forEach(p => { p[0] += dLat; p[1] += dLon; }); persist(); render(); return true; } return false; },
       scalePolygon: (key, f) => { const r = ring(key); if (r) { const c = centroid(r); r.forEach(p => { p[0] = c[0] + (p[0] - c[0]) * f; p[1] = c[1] + (p[1] - c[1]) * f; }); persist(); render(); return true; } return false; },
-      deleteRestricted: (id) => { if (state.poly && state.poly.restricted_zones) { state.poly.restricted_zones = state.poly.restricted_zones.filter(z => z.id !== id); persist(); render(); return true; } return false; }
+      deleteRestricted: (id) => { if (state.poly && state.poly.restricted_zones) { state.poly.restricted_zones = state.poly.restricted_zones.filter(z => z.id !== id); persist(); render(); return true; } return false; },
+      // delete-fix V1: delete ANY editable polygon (the lot.json original is read-only)
+      deletePolygon: (key) => {
+        if (!state.poly || key === 'lot') return false;
+        if (key === 'usable') state.poly.usable_area_polygon = null;
+        else if (key === 'rail') { state.poly.rail_side_opportunity_polygon = null; state.poly.rail_axis_hint = null; }
+        else if (key === 'frontage') state.poly.frontage_zone = null;
+        else if (key === 'service') state.poly.service_zone = null;
+        else if (key.startsWith('rz:')) state.poly.restricted_zones = (state.poly.restricted_zones || []).filter(z => z.id !== key.slice(3));
+        else return false;
+        persist(); render(); return true;
+      },
+      setHidden: (key, on) => { if (on) state.hidden.add(key); else state.hidden.delete(key); render(); },
+      isHidden: (key) => state.hidden.has(key),
+      // compact layer list: { key, label, deletable } (lot original is deletable:false)
+      listPolygons: () => {
+        const out = [];
+        if (lotRef && lotRef.length) out.push({ key: 'lot', label: 'Lote original (lot.json)', deletable: false });
+        if (state.poly) {
+          if (state.poly.usable_area_polygon) out.push({ key: 'usable', label: 'Área utilizable', deletable: true });
+          if (state.poly.rail_side_opportunity_polygon) out.push({ key: 'rail', label: 'Oportunidad ferrocarril', deletable: true });
+          if (state.poly.frontage_zone) out.push({ key: 'frontage', label: 'Frente / parqueo', deletable: true });
+          if (state.poly.service_zone) out.push({ key: 'service', label: 'Servicio', deletable: true });
+          (state.poly.restricted_zones || []).forEach(z => out.push({ key: 'rz:' + z.id, label: z.label || z.id, deletable: true }));
+        }
+        return out;
+      }
     };
     // keep the calibrated lot reference in sync if the user nudges calibration
     window.addEventListener('kairos:lot-redraw', () => {

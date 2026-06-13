@@ -293,6 +293,9 @@ if (existsSync(mcPath)) {
   (/id=["']wsZoomIn["']/.test(W) && /id=["']wsFitSel["']/.test(W) && /id=["']wsFitUsable["']/.test(W) && /id=["']wsFitLot["']/.test(W) && /id=["']wsZoomLevel["']/.test(W)) ? ok('workspace: advanced zoom (in/out/fit selected/usable/lot + level)') : fail('workspace: missing advanced zoom controls');
   (/id=["']wsSave["']/.test(W) && /id=["']wsReset["']/.test(W) && /id=["']wsSaved["']/.test(W)) ? ok('workspace: save/reset + saved indicator') : fail('workspace: missing save/reset/indicator');
   (/id=["']wsPolySel["']/.test(W) && /id=["']wsPolyScaleUp["']/.test(W) && /data-ws-nudge=/.test(W) && /id=["']wsPolyDel["']/.test(W)) ? ok('workspace: polygon move/scale/delete controls') : fail('workspace: missing polygon move/scale/delete');
+  // delete-fix V1
+  /id=["']wsDeleteSel["']/.test(W) ? ok('workspace: "Delete selected" button') : fail('workspace: missing Delete selected button');
+  /id=["']wsLayers["']/.test(W) ? ok('workspace: compact layer list (Polygons/Elements/Notes)') : fail('workspace: missing layer list');
 }
 const wsPathExp = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPathExp)) {
@@ -306,13 +309,21 @@ if (existsSync(wsPathExp)) {
   /function applyPreset/.test(WJ2) ? ok('workspace.js: layer presets logic') : fail('workspace.js: missing presets logic');
   (/function togglePlan/.test(WJ2) && /function renderPlan/.test(WJ2)) ? ok('workspace.js: clean plan view (same data)') : fail('workspace.js: missing clean plan view');
   (/fitUsable/.test(WJ2) && /fitLot/.test(WJ2) && /fitSelected/.test(WJ2)) ? ok('workspace.js: fit usable/lot/selected') : fail('workspace.js: missing fit-zoom logic');
-  /KairosLayout/.test(WJ2) && !/lot\.json/.test(WJ2) ? ok('workspace.js: polygon ops via KairosLayout (no lot.json write)') : fail('workspace.js: lot.json reference or missing KairosLayout');
+  /KairosLayout/.test(WJ2) && !/fetch\([^)]*lot\.json|setItem\([^)]*lot\.json/.test(WJ2) ? ok('workspace.js: polygon ops via KairosLayout (no lot.json read/write)') : fail('workspace.js: lot.json read/write or missing KairosLayout');
+  // delete-fix V1 behaviours
+  (/function deleteSelectedPolygon/.test(WJ2) && /Delete this editable polygon\? You can restore seed/.test(WJ2)) ? ok('workspace.js: delete editable polygon (confirm important)') : fail('workspace.js: missing editable-polygon delete');
+  (/function hitTestPoly/.test(WJ2) && /function selectPoly/.test(WJ2)) ? ok('workspace.js: click-to-select polygon (hit-test)') : fail('workspace.js: missing polygon click-select');
+  /function buildLayerList/.test(WJ2) ? ok('workspace.js: layer list (select/hide/delete rows)') : fail('workspace.js: missing layer list logic');
+  /Original lot from lot\.json — read-only|read-only/.test(WJ2) ? ok('workspace.js: original lot read-only guard') : fail('workspace.js: missing read-only lot guard');
 }
-// layout-editor additive mutators (move/scale/delete) — present & no lot.json write
+// layout-editor additive mutators (move/scale/delete/hide/list) — present & no lot.json write
 const lePathExp = join(BASE, 'geometry-engine', 'map-calibration', 'layout-editor.js');
 if (existsSync(lePathExp)) {
   const LE2 = readFileSync(lePathExp, 'utf8');
   (/movePolygon:/.test(LE2) && /scalePolygon:/.test(LE2) && /deleteRestricted:/.test(LE2)) ? ok('layout-editor: additive move/scale/delete mutators') : fail('layout-editor: missing polygon mutators');
+  (/deletePolygon:/.test(LE2) && /setHidden:/.test(LE2) && /listPolygons:/.test(LE2)) ? ok('layout-editor: delete-any-polygon + hide + list (delete-fix)') : fail('layout-editor: missing delete/hide/list API');
+  /Original lot from lot\.json — read-only/.test(LE2) ? ok('layout-editor: original lot read-only tooltip') : fail('layout-editor: missing read-only lot tooltip');
+  /deletePolygon: \(key\) => \{[^]*?key === 'lot'[^]*?return false/.test(LE2) ? ok('layout-editor: lot.json polygon never deleted') : fail('layout-editor: lot delete not guarded');
 }
 const wsPath = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPath)) {
@@ -324,7 +335,7 @@ if (existsSync(wsPath)) {
   (/spatial-workspace\/v1/.test(WJ) && /constraint-report\/v1/.test(WJ) && /kairos\.elements\/v1/.test(WJ) && /kairos\.notes\/v1/.test(WJ)) ? ok('workspace.js: exports (workspace/polygons/elements/constraints/notes)') : fail('workspace.js: missing export schemas');
   (/addElementAt/.test(WJ) && /rotation/.test(WJ) && /validate\(/.test(WJ)) ? ok('workspace.js: element editor (add/drag/rotate) + live validation') : fail('workspace.js: missing element editor/validation');
   (/three_d_prep/.test(WJ) && /element_volumes/.test(WJ) && /camera_anchors/.test(WJ)) ? ok('workspace.js: 3D-preview prep (volumes/terrain/anchors/flags)') : fail('workspace.js: missing 3D-prep export');
-  !/lot\.json/.test(WJ) ? ok('workspace.js: does not touch lot.json') : fail('workspace.js: references lot.json');
+  !/fetch\([^)]*lot\.json|setItem\([^)]*lot\.json/.test(WJ) ? ok('workspace.js: does not read/write lot.json (mention in read-only label only)') : fail('workspace.js: reads/writes lot.json');
 }
 // vendorized terrain profile — schema, status, disclaimer, real grid
 const tpPath = join(BASE, 'data', 'terrain', 'terrain-profile.json');

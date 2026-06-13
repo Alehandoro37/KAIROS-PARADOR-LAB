@@ -41,7 +41,8 @@
 
   const state = {
     mode: 'select', addType: 'container-20', noteCat: 'general', snap: false, selPoly: null,
-    elements: [], notes: [], sel: null, layers: {}, esri: null, veg: null, anchors: []
+    elements: [], notes: [], sel: null, layers: {}, esri: null, veg: null, anchors: [],
+    hiddenEl: new Set(), hiddenNote: new Set()
   };
 
   // ---- geo helpers ([lat,lon]) ---------------------------------------------
@@ -96,6 +97,7 @@
     clearGroup('elements');
     state.elements.forEach(el => {
       const t = TYPES[el.type] || {}, v = validate(el); el._status = v.status; el._flags = v.flags;
+      if (state.hiddenEl.has(el.id)) return;   // hidden in layer list
       const poly = L.polygon(footprint(el), { color: STATUS_COLOR[v.status], weight: el.id === state.sel ? 3 : 1.8, fillColor: t.color || '#cfe', fillOpacity: el.id === state.sel ? 0.55 : 0.4 });
       poly.on('click', () => selectEl(el.id));
       state.layers.elements.addLayer(poly);
@@ -113,7 +115,7 @@
     state.notes.forEach(n => {
       const mk = L.marker([n.lat, n.lon], { icon: L.divIcon({ className: 'ws-note', html: '📝', iconSize: [18, 18] }) });
       mk.bindTooltip(`[${n.category}] ${n.text}`, { direction: 'top' });
-      mk.on('click', () => { state.sel = 'note:' + n.id; showProps(); });
+      mk.on('click', () => { state._elClick = Date.now(); state.sel = 'note:' + n.id; state.selPoly = null; highlightPoly(); showProps(); buildLayerList(); });
       state.layers.notes.addLayer(mk);
     });
   }
@@ -123,7 +125,7 @@
   }
 
   // ---- selection / properties ----------------------------------------------
-  function selectEl(id) { state.sel = id; renderElements(); showProps(); }
+  function selectEl(id) { state._elClick = Date.now(); state.sel = id; state.selPoly = null; highlightPoly(); renderElements(); showProps(); buildLayerList(); }
   function showProps() {
     const host = $('wsProps'); if (!host) return;
     if (typeof state.sel === 'string' && state.sel.startsWith('note:')) {
@@ -136,7 +138,24 @@
       host.querySelector('[data-del-note]').addEventListener('click', () => { state.notes = state.notes.filter(x => x.id !== n.id); state.sel = null; save(); renderNotes(); host.innerHTML = ''; refreshStatus(); });
       return;
     }
-    const el = state.elements.find(x => x.id === state.sel); if (!el) { host.innerHTML = '<p class="ws-hint">Selecciona un elemento para ver/editar sus propiedades.</p>'; return; }
+    const el = state.elements.find(x => x.id === state.sel);
+    if (!el) {
+      if (state.selPoly) { // editable polygon selected
+        const key = state.selPoly, isLot = key === 'lot', hidden = window.KairosLayout && window.KairosLayout.isHidden && window.KairosLayout.isHidden(key);
+        host.innerHTML =
+          `<div class="ws-prow"><b>${polyLabel(key)}</b><span class="ws-badge ${isLot ? 'warning' : 'ok'}">${isLot ? 'READ-ONLY' : 'POLYGON'}</span></div>` +
+          `<div class="ws-pgrid"><span>Tipo</span><span>${isLot ? 'Lote original (lot.json)' : 'Polígono editable'}</span><span>Clave</span><span>${key}</span></div>` +
+          (isLot ? `<p class="ws-hint">Original lot from lot.json — read-only. Puedes ocultarlo, no borrarlo.</p>` : '') +
+          `<div class="ws-actrow">` +
+          `<button class="ws-b" id="wsPolyHide">${hidden ? 'Show' : 'Hide'}</button>` +
+          (isLot ? '' : `<button class="ws-b" id="wsDeleteSel2">Delete selected</button>`) +
+          `</div>`;
+        $('wsPolyHide').addEventListener('click', () => { window.KairosLayout.setHidden(key, !window.KairosLayout.isHidden(key)); showProps(); buildLayerList(); });
+        const db = $('wsDeleteSel2'); if (db) db.addEventListener('click', deleteSelectedPolygon);
+        return;
+      }
+      host.innerHTML = '<p class="ws-hint">Selecciona un polígono o elemento (clic en el mapa o en la lista) para ver/editar/borrar.</p>'; return;
+    }
     const t = TYPES[el.type] || {}, v = validate(el);
     host.innerHTML =
       `<div class="ws-prow"><b>${t.label || el.type}</b><span class="ws-badge ${v.status}">${v.status.toUpperCase()}</span></div>` +
@@ -227,7 +246,7 @@
     fr.onload = () => { try { const d = JSON.parse(fr.result);
       if (Array.isArray(d.elements)) state.elements = d.elements.map(e => ({ id: e.id || uid(), type: e.type, w: (e.dimensions || {}).w || e.w, d: (e.dimensions || {}).d || e.d, rotation: e.rotation || 0, phase: e.phase || 'F1', note: e.note || '', lat: e.lat, lon: e.lon }));
       if (Array.isArray(d.notes)) state.notes = d.notes;
-      save(); renderElements(); renderNotes(); refreshStatus();
+      save(); renderElements(); renderNotes(); refreshStatus(); buildLayerList();
     } catch (e) { alert('Import inválido: ' + e.message); } };
     fr.readAsText(file);
   }
@@ -238,25 +257,34 @@
   function resetToSeed() {
     if (!confirm('¿Reset al seed? Se borran elementos y notas locales (los polígonos vuelven al seed). El lote original no se modifica.')) return;
     try { localStorage.removeItem(LS_EL); localStorage.removeItem(LS_NOTE); localStorage.removeItem('kairos.layoutPolygons.v1'); } catch (e) {}
-    state.elements = []; state.notes = []; state.sel = null;
-    renderElements(); renderNotes(); showProps(); setSaved('Reset · recarga para re-seed polígonos');
+    state.elements = []; state.notes = []; state.sel = null; state.selPoly = null; state.hiddenEl.clear(); state.hiddenNote.clear();
+    highlightPoly(); renderElements(); renderNotes(); showProps(); buildLayerList(); setSaved('Reset · recarga para re-seed polígonos');
   }
   // hook save() to update the indicator
   const _save = save; // eslint-disable-line
   function saveAll() { _save(); setSaved('✓ Saved locally'); }
 
-  // ---- delete key -----------------------------------------------------------
+  // ---- delete selected (note / element / editable polygon) ------------------
+  const IMPORTANT_POLY = ['usable', 'rail', 'frontage', 'service'];
   function deleteSelected() {
     if (typeof state.sel === 'string' && state.sel.startsWith('note:')) {
-      const id = state.sel.slice(5); state.notes = state.notes.filter(n => n.id !== id); state.sel = null; saveAll(); renderNotes(); showProps(); refreshStatus(); return;
+      const id = state.sel.slice(5); state.notes = state.notes.filter(n => n.id !== id); state.sel = null; saveAll(); renderNotes(); showProps(); refreshStatus(); buildLayerList(); return;
     }
-    const el = state.elements.find(x => x.id === state.sel); if (!el) return;
-    state.elements = state.elements.filter(x => x.id !== el.id); state.sel = null; saveAll(); renderElements(); showProps();
+    const el = state.elements.find(x => x.id === state.sel);
+    if (el) { state.elements = state.elements.filter(x => x.id !== el.id); state.sel = null; saveAll(); renderElements(); showProps(); buildLayerList(); return; }
+    if (state.selPoly) deleteSelectedPolygon();
+  }
+  function deleteSelectedPolygon() {
+    const key = state.selPoly; if (!key || !window.KairosLayout) return;
+    if (key === 'lot') { alert('Original lot from lot.json — read-only. Puedes ocultarlo (hide/show) pero no borrarlo.'); return; }
+    if (IMPORTANT_POLY.includes(key)) { if (!confirm('Delete this editable polygon? You can restore seed with Reset to seed.')) return; }
+    else if (key.startsWith('rz:')) { if (!confirm('¿Borrar esta zona restringida?')) return; }
+    window.KairosLayout.deletePolygon(key); state.selPoly = null; highlightPoly(); renderElements(); buildLayerList(); showProps(); setSaved('✓ Saved locally · borrado');
   }
 
   // ---- polygon select / move (drag interior) / scale / delete ---------------
-  function scalePoly(f) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.scalePolygon(state.selPoly, f); renderElements(); setSaved('✓ Saved locally'); } }
-  function nudgePoly(dLat, dLon) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); renderElements(); setSaved('✓ Saved locally'); } }
+  function scalePoly(f) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.scalePolygon(state.selPoly, f); highlightPoly(); renderElements(); setSaved('✓ Saved locally'); } }
+  function nudgePoly(dLat, dLon) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); highlightPoly(); renderElements(); setSaved('✓ Saved locally'); } }
   function deletePoly() {
     if (!state.selPoly) return;
     if (!state.selPoly.startsWith('rz:')) { alert('Solo las zonas restringidas se pueden borrar; las categorías base se editan/escalan (el lote original nunca se borra).'); return; }
@@ -267,8 +295,53 @@
   function bindPolygonDrag() {
     let drag = null;
     map.on('mousedown', (e) => { if (state.mode !== 'move' || !state.selPoly) return; drag = e.latlng; map.dragging.disable(); });
-    map.on('mousemove', (e) => { if (!drag) return; const dLat = e.latlng.lat - drag.lat, dLon = e.latlng.lng - drag.lng; if (window.KairosLayout) window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); drag = e.latlng; renderElements(); });
+    map.on('mousemove', (e) => { if (!drag) return; const dLat = e.latlng.lat - drag.lat, dLon = e.latlng.lng - drag.lng; if (window.KairosLayout) window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); drag = e.latlng; highlightPoly(); renderElements(); });
     map.on('mouseup', () => { if (drag) { drag = null; map.dragging.enable(); setSaved('✓ Saved locally'); } });
+  }
+
+  // ---- polygon selection (click to select) + highlight ---------------------
+  const POLY_LABEL = { lot: 'Lote original (lot.json)', usable: 'Área utilizable', rail: 'Oportunidad ferrocarril', frontage: 'Frente / parqueo', service: 'Servicio' };
+  const polyLabel = (k) => POLY_LABEL[k] || (k && k.startsWith('rz:') ? 'Zona restringida' : k);
+  const ringForKey = (key) => { if (key === 'lot') { const r = window.KairosLayout && window.KairosLayout.getLotRef && window.KairosLayout.getLotRef(); return r || ringFromPolys('usable'); } return ringFromPolys(key); };
+  function highlightPoly() {
+    clearGroup('selHL'); if (!state.selPoly) return;
+    const r = ringForKey(state.selPoly); if (!r) return;
+    state.layers.selHL.addLayer(L.polygon(r, { color: '#fff', weight: 3, dashArray: '4 4', fill: false }));
+  }
+  function selectPoly(key) { state.selPoly = key; state.sel = null; const ps = $('wsPolySel'); if (ps) ps.value = key && !key.startsWith('rz:') || /^rz:/.test(key) ? key : ''; highlightPoly(); renderElements(); showProps(); buildLayerList(); }
+  const polyArea = (ll) => { let a = 0; for (let i = 0, j = ll.length - 1; i < ll.length; j = i++) a += (ll[j][1] + ll[i][1]) * (ll[j][0] - ll[i][0]); return Math.abs(a / 2); };
+  function hitTestPoly(latlng) {
+    if (!window.KairosLayout || !window.KairosLayout.listPolygons) return;
+    const pt = [latlng.lat, latlng.lng]; let best = null, bestA = Infinity;
+    window.KairosLayout.listPolygons().forEach(p => { const r = ringForKey(p.key); if (r && inPolyWS(pt, r)) { const a = polyArea(r); if (a < bestA) { bestA = a; best = p.key; } } });
+    if (best) selectPoly(best); else { state.selPoly = null; highlightPoly(); buildLayerList(); }
+  }
+  const inPolyWS = (pt, ll) => inPoly(pt, ll);
+
+  // ---- compact layer list: Polygons / Elements / Notes ----------------------
+  function buildLayerList() {
+    const host = $('wsLayers'); if (!host) return;
+    const KL = window.KairosLayout;
+    const polyRows = (KL && KL.listPolygons ? KL.listPolygons() : []).map(p => {
+      const hidden = KL.isHidden && KL.isHidden(p.key), sel = state.selPoly === p.key;
+      const del = p.deletable ? `<button class="ws-x" data-ll-delpoly="${p.key}" title="Borrar">✕</button>` : `<span class="ws-ro" title="Original lot from lot.json — read-only">read-only</span>`;
+      return `<div class="ws-ll${sel ? ' sel' : ''}"><button class="ws-llname" data-ll-poly="${p.key}">${p.label}</button><button class="ws-eye" data-ll-hidepoly="${p.key}">${hidden ? '🚫' : '👁'}</button>${del}</div>`;
+    }).join('');
+    const elRows = state.elements.map(e => { const t = TYPES[e.type] || {}; const sel = state.sel === e.id, hidden = state.hiddenEl.has(e.id);
+      return `<div class="ws-ll${sel ? ' sel' : ''}"><button class="ws-llname" data-ll-el="${e.id}">${t.label || e.type}${e.status === 'GENERATED_CONCEPTUAL' ? ' ·gen' : ''}</button><button class="ws-eye" data-ll-hideel="${e.id}">${hidden ? '🚫' : '👁'}</button><button class="ws-x" data-ll-delel="${e.id}">✕</button></div>`; }).join('');
+    const noteRows = state.notes.map(n => { const sel = state.sel === 'note:' + n.id;
+      return `<div class="ws-ll${sel ? ' sel' : ''}"><button class="ws-llname" data-ll-note="${n.id}">📝 ${(n.category || 'nota')}</button><button class="ws-x" data-ll-delnote="${n.id}">✕</button></div>`; }).join('');
+    host.innerHTML = `<div class="ws-llgrp"><b>Polygons</b>${polyRows || '<i>—</i>'}</div>` +
+      `<div class="ws-llgrp"><b>Elements (${state.elements.length})</b>${elRows || '<i>—</i>'}</div>` +
+      `<div class="ws-llgrp"><b>Notes (${state.notes.length})</b>${noteRows || '<i>—</i>'}</div>`;
+    host.querySelectorAll('[data-ll-poly]').forEach(b => b.addEventListener('click', () => selectPoly(b.getAttribute('data-ll-poly'))));
+    host.querySelectorAll('[data-ll-hidepoly]').forEach(b => b.addEventListener('click', () => { const k = b.getAttribute('data-ll-hidepoly'); KL.setHidden(k, !KL.isHidden(k)); buildLayerList(); }));
+    host.querySelectorAll('[data-ll-delpoly]').forEach(b => b.addEventListener('click', () => { state.selPoly = b.getAttribute('data-ll-delpoly'); state.sel = null; deleteSelectedPolygon(); }));
+    host.querySelectorAll('[data-ll-el]').forEach(b => b.addEventListener('click', () => selectEl(b.getAttribute('data-ll-el'))));
+    host.querySelectorAll('[data-ll-hideel]').forEach(b => b.addEventListener('click', () => { const id = b.getAttribute('data-ll-hideel'); if (state.hiddenEl.has(id)) state.hiddenEl.delete(id); else state.hiddenEl.add(id); renderElements(); buildLayerList(); }));
+    host.querySelectorAll('[data-ll-delel]').forEach(b => b.addEventListener('click', () => { state.elements = state.elements.filter(x => x.id !== b.getAttribute('data-ll-delel')); state.sel = null; saveAll(); renderElements(); buildLayerList(); showProps(); }));
+    host.querySelectorAll('[data-ll-note]').forEach(b => b.addEventListener('click', () => { state.sel = 'note:' + b.getAttribute('data-ll-note'); state.selPoly = null; highlightPoly(); showProps(); buildLayerList(); }));
+    host.querySelectorAll('[data-ll-delnote]').forEach(b => b.addEventListener('click', () => { state.notes = state.notes.filter(x => x.id !== b.getAttribute('data-ll-delnote')); state.sel = null; saveAll(); renderNotes(); buildLayerList(); refreshStatus(); }));
   }
 
   // ---- advanced zoom --------------------------------------------------------
@@ -334,7 +407,7 @@
     add('sign', fz ? lerp(fz, 0.95) : [b.s + (b.n - b.s) * 0.08, c[1]], 0, 'signage de entrada');
     // preserve trees if vegetation data exists
     if (state.veg) (state.veg.clusters || []).filter(t => t.action === 'preserve').slice(0, 3).forEach(t => add('tree-preserve', t.center, 0, 'árbol a conservar'));
-    saveAll(); renderElements(); refreshStatus();
+    saveAll(); renderElements(); refreshStatus(); buildLayerList();
     setSaved('Layout primitivo generado (GENERATED_CONCEPTUAL)');
   }
 
@@ -381,9 +454,15 @@
     $('wsExportConstraints') && $('wsExportConstraints').addEventListener('click', () => dl(constraintDoc(), 'logos-parador-constraint-report.json'));
     $('wsExportNotes') && $('wsExportNotes').addEventListener('click', () => dl(notesDoc(), 'logos-parador-notes.json'));
     $('wsImport') && $('wsImport').addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) importJson(e.target.files[0]); });
-    map.on('click', (e) => { if (state.mode === 'add') addElementAt(e.latlng); else if (state.mode === 'notes') addNoteAt(e.latlng); });
+    map.on('click', (e) => {
+      if (state.mode === 'add') return addElementAt(e.latlng);
+      if (state.mode === 'notes') return addNoteAt(e.latlng);
+      if (state.mode === 'select' || state.mode === 'move') { if (Date.now() - (state._elClick || 0) < 90) return; hitTestPoly(e.latlng); }
+    });
+    // "Delete selected" button + clear-selection on Escape
+    $('wsDeleteSel') && $('wsDeleteSel').addEventListener('click', deleteSelected);
     // delete key
-    document.addEventListener('keydown', (e) => { if ((e.key === 'Delete' || e.key === 'Backspace') && state.sel != null) { const tag = (e.target && e.target.tagName) || ''; if (/INPUT|TEXTAREA|SELECT/.test(tag)) return; e.preventDefault(); deleteSelected(); } });
+    document.addEventListener('keydown', (e) => { if ((e.key === 'Delete' || e.key === 'Backspace') && (state.sel != null || state.selPoly)) { const tag = (e.target && e.target.tagName) || ''; if (/INPUT|TEXTAREA|SELECT/.test(tag) || (e.target && e.target.isContentEditable)) return; e.preventDefault(); deleteSelected(); } });
     // save / reset
     $('wsSave') && $('wsSave').addEventListener('click', saveToBrowser);
     $('wsReset') && $('wsReset').addEventListener('click', resetToSeed);
@@ -415,7 +494,7 @@
     load(); buildPalette(); bind(); setupSatellite();
     fetch(DATA + 'spatial/vegetation-strategy.json').then(r => r.ok ? r.json() : null).then(v => { state.veg = v; renderElements(); }).catch(() => {});
     fetch(DATA + 'spatial/spatial-zones.json').then(r => r.ok ? r.json() : null).then(z => { state.anchors = (z && z.camera_anchors) || []; }).catch(() => {});
-    renderElements(); renderNotes(); showProps(); setMode('select'); setSaved('✓ Saved locally');
+    renderElements(); renderNotes(); showProps(); buildLayerList(); setMode('select'); setSaved('✓ Saved locally');
   }
 
   if (window.MapCalibration && window.MapCalibration.map) boot();

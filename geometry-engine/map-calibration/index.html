@@ -95,6 +95,14 @@
     .ws-x{background:none;border:0;color:#f3c9bb;cursor:pointer;font-size:14px}
     .ws-status{color:var(--gold);font-size:11px;margin:0 0 8px}
     .ws-lbl{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:10px 0 4px}
+    .ws-layers{max-height:170px;overflow:auto;border:1px solid rgba(143,229,255,.12);border-radius:10px;padding:6px}
+    .ws-llgrp{margin:2px 0 6px} .ws-llgrp>b{display:block;font:600 10px var(--mono);color:#9cc6dd;letter-spacing:.06em;margin:4px 0 2px} .ws-llgrp>i{color:#6f8a96;font-size:11px}
+    .ws-ll{display:flex;align-items:center;gap:4px;padding:2px 0}
+    .ws-ll.sel{background:rgba(231,177,90,.14);border-radius:6px}
+    .ws-llname{flex:1;text-align:left;background:none;border:0;color:#cbe7ef;font:12px var(--mono);cursor:pointer;padding:3px 5px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ws-llname:hover{color:#fff}
+    .ws-eye{background:none;border:0;cursor:pointer;font-size:13px;opacity:.8;padding:2px}
+    .ws-ro{font:600 9px var(--mono);color:#9cc6dd;border:1px solid rgba(143,229,255,.25);border-radius:6px;padding:2px 5px}
     .ws-b[aria-pressed="true"]{background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border-color:transparent}
     .ws-plan{position:absolute;left:24px;right:24px;top:24px;height:calc(100vh - 48px);z-index:1200;background:#06141d;
       background-image:radial-gradient(120% 80% at 80% -10%,rgba(23,86,92,.28),rgba(5,16,26,0) 60%);
@@ -371,6 +379,7 @@
       <button class="ws-tb" data-ws-mode="add" aria-pressed="false" type="button">Add Element</button>
       <button class="ws-tb" data-ws-mode="move" aria-pressed="false" type="button">Move</button>
       <button class="ws-tb" data-ws-mode="notes" aria-pressed="false" type="button">Notes</button>
+      <button class="ws-tb" id="wsDeleteSel" type="button" title="Borrar lo seleccionado (o Supr/Backspace)">Delete selected</button>
       <span class="ws-sep"></span>
       <button class="ws-tb" id="wsGenerate" type="button" title="Generar layout primitivo dentro del área utilizable">Generate Layout</button>
       <button class="ws-tb" id="wsPlanToggle" type="button" title="Vista plano limpio (mismos datos, sin mapa)">Clean Plan View</button>
@@ -400,6 +409,8 @@
           <button class="ws-b" id="wsSave" type="button">Save to browser</button>
           <button class="ws-b" id="wsReset" type="button">Reset to seed</button>
         </div>
+        <p class="ws-lbl">Capas (seleccionar · ocultar 👁 · borrar ✕)</p>
+        <div class="ws-layers" id="wsLayers"></div>
         <p class="ws-lbl">Layer presets</p>
         <div class="ws-exports">
           <button class="ws-b" data-ws-preset="clean" aria-pressed="false" type="button">Clean Design</button>
