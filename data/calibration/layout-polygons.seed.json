@@ -1,0 +1,83 @@
+{
+  "schema": "kairos.layout-polygons/v1",
+  "version": "1.0.0",
+  "status": "PRELIMINARY_CONCEPTUAL",
+  "crs": "EPSG:4326 (WGS84) · coordenadas como [lat, lon]",
+  "source": {
+    "lot": "../../data/lot.json",
+    "note": "Los polígonos derivan del lote REAL (lot.json) y son EDITABLES sobre Map Calibration. lot.json no se modifica. No es catastro ni topografía: requiere levantamiento profesional."
+  },
+  "source_lot_polygon": [
+    [3.731094179667487, -76.32341647097293],
+    [3.731887640145794, -76.32351406605405],
+    [3.731837248990664, -76.32371668283456],
+    [3.731436431433172, -76.32357451266348]
+  ],
+  "usable_area_polygon": [
+    [3.731178725, -76.32344148],
+    [3.731829362, -76.32352016],
+    [3.731788042, -76.32368445],
+    [3.731459371, -76.32359011]
+  ],
+  "rail_side_opportunity_polygon": [
+    [3.731150, -76.323250],
+    [3.731800, -76.323345],
+    [3.731770, -76.323120],
+    [3.731130, -76.323060]
+  ],
+  "rail_axis_hint": {
+    "label": "Eje férreo (referencia conceptual)",
+    "line": [[3.731040, -76.323360], [3.731960, -76.323300]],
+    "note": "Trazo CONCEPTUAL del corredor férreo del Pacífico (costado oriental). Validar con OSM/levantamiento; no asume propiedad ni alineación oficial."
+  },
+  "frontage_zone": {
+    "id": "frontage",
+    "label": "Frente vial / acceso (Troncal de Occidente)",
+    "polygon": [
+      [3.731150, -76.323430],
+      [3.731820, -76.323522],
+      [3.731790, -76.323560],
+      [3.731175, -76.323472]
+    ]
+  },
+  "service_zone": {
+    "id": "service",
+    "label": "Servicios / back-of-house",
+    "polygon": [
+      [3.731792, -76.323684],
+      [3.731837, -76.323612],
+      [3.731758, -76.323586],
+      [3.731718, -76.323652]
+    ]
+  },
+  "restricted_zones": [
+    {
+      "id": "rz-rail-setback",
+      "label": "Retiro corredor férreo (preliminar — validar servidumbre)",
+      "polygon": [
+        [3.731110, -76.323420],
+        [3.731872, -76.323516],
+        [3.731852, -76.323542],
+        [3.731122, -76.323446]
+      ]
+    },
+    {
+      "id": "rz-drainage",
+      "label": "Zona baja / drenaje (verificar en terreno)",
+      "polygon": [
+        [3.731094, -76.323416],
+        [3.731168, -76.323432],
+        [3.731156, -76.323486],
+        [3.731094, -76.323470]
+      ]
+    }
+  ],
+  "notes": [
+    "Polígono utilizable = lote real con retiro conceptual; ajústalo sobre el mapa.",
+    "La zona al otro lado del ferrocarril es una OPORTUNIDAD VISUAL / posible uso; NO se asume propiedad legal.",
+    "Acceso vehicular conceptual desde el frente vial (Troncal de Occidente).",
+    "Todo es PRELIMINAR / CONCEPTUAL y requiere topografía, estudios y licencias."
+  ],
+  "rail_opportunity_label": "Zona de oportunidad visual / posible uso — validar propiedad, servidumbres y retiros",
+  "disclaimer": "PRELIMINAR / CONCEPTUAL — no reemplaza topografía, planos, catastro ni licencias."
+}

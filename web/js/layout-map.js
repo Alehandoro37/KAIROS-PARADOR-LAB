@@ -248,10 +248,26 @@
       setVB({ ...state.base });
       bind(); render(doc); applyLevel(1);
       if ($('lmStatus')) $('lmStatus').textContent = `${(doc.modules || []).length} módulos · maqueta conceptual`;
+      checkGeoreferencedSource();
     } catch (e) {
       if ($('lmInfo')) $('lmInfo').innerHTML = `<p class="lm-note">No se pudo cargar la maqueta (${esc(e.message)}). ` +
         `Esta vista requiere el build externo (ruta relativa a <code>../data/layout/container-layout.json</code>).</p>`;
     }
+  }
+
+  // Source-of-truth check: if the georeferenced layout polygons (edited on Map
+  // Calibration over the REAL map) exist, say so — this stylized maquette is
+  // secondary/legacy and must not be presented as the primary source.
+  function checkGeoreferencedSource() {
+    const note = $('lmSourceNote'); if (!note) return;
+    fetch('../data/calibration/layout-polygons.seed.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        note.innerHTML = (d && d.usable_area_polygon)
+          ? 'Existe un layout <b>georreferenciado</b> sobre el mapa real — esa es la versión vigente.'
+          : '';
+      })
+      .catch(() => { /* offline / no build — banner text already states the source of truth */ });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load); else load();

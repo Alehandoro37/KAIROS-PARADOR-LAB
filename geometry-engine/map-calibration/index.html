@@ -46,6 +46,11 @@
     .offline-banner{position:absolute;right:44px;top:44px;max-width:320px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:12px 14px;font:12px var(--mono);z-index:600;display:none;box-shadow:0 14px 36px rgba(0,0,0,.34)}
     .offline-banner.show{display:block}
     .leaflet-container{font-family:var(--mono)}
+    /* editable layout vertices (layout-editor.js) */
+    .le-vtx{background:#e7b15a;border:2px solid #06141d;border-radius:50%;width:14px;height:14px;
+      box-shadow:0 0 0 2px rgba(231,177,90,.45);cursor:grab}
+    .le-vtx:active{cursor:grabbing}
+    #leImport{position:absolute;width:0;height:0;opacity:0}
     .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(231,177,90,.5);font:700 12px var(--mono);letter-spacing:.14em;pointer-events:none;text-align:center}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
@@ -179,6 +184,59 @@
         sin romper el mapa. <b>Export</b> = descarga manual. <b>Clear cache</b> borra solo localStorage.</p>
     </fieldset>
 
+    <fieldset>
+      <legend>Layout on Map — PRELIMINAR (polígonos editables)</legend>
+      <p class="fineprint">El diseño <b>NACE desde el mapa real</b>: los polígonos derivan del lote
+        (<b>data/lot.json</b>) y son <b>editables</b>. Define el <b>área utilizable</b> y una posible
+        <b>zona al otro lado del ferrocarril</b>. Todo es <b>conceptual / preliminar</b> y
+        <b>requiere topografía</b>, estudios y licencias — no es catastro.</p>
+
+      <div class="ctrl">
+        <label for="leLayer">Polígono a editar</label>
+        <select id="leLayer">
+          <option value="usable">Área utilizable</option>
+          <option value="rail">Zona oportunidad (ferrocarril)</option>
+          <option value="frontage">Frente vial / parqueo</option>
+          <option value="service">Servicios / back-of-house</option>
+          <option value="rz:rz-rail-setback">Restringido · retiro férreo</option>
+          <option value="rz:rz-drainage">Restringido · zona baja</option>
+        </select>
+      </div>
+      <div class="row2">
+        <button class="btn" id="leEdit" type="button" aria-pressed="false">Editar vértices</button>
+        <button class="btn" id="leAdd" type="button" aria-pressed="false">+ punto</button>
+      </div>
+      <button class="btn reset" id="leResetUsable" type="button" style="margin-top:10px">Reset área utilizable al lote</button>
+      <p class="fineprint">Arrastra los vértices (marcadores) del polígono activo; <b>doble clic</b> en un
+        vértice lo elimina. Con <b>+ punto</b> activo, haz clic en el mapa para añadir un vértice.</p>
+
+      <div class="ctrl" style="margin-top:8px">
+        <label><input type="checkbox" id="leShowLot" checked> Lote original (lot.json)</label>
+        <label><input type="checkbox" id="leShowUsable" checked> Área utilizable</label>
+        <label><input type="checkbox" id="leShowRail" checked> Oportunidad ferrocarril</label>
+        <label><input type="checkbox" id="leShowRestricted" checked> Restricciones / frente / servicios</label>
+        <label><input type="checkbox" id="leShowLayout"> Layout de contenedores (sobre el mapa)</label>
+        <label><input type="checkbox" id="leShowCirc"> Circulación</label>
+        <label><input type="checkbox" id="leShowLand"> Paisaje / vegetación</label>
+      </div>
+
+      <p class="fineprint">Zona férrea: <b>Zona de oportunidad visual / posible uso — validar propiedad,
+        servidumbres y retiros</b>. No se asume propiedad legal.</p>
+
+      <div class="row2" style="margin-top:6px">
+        <button class="btn primary reset" id="leExportPoly" type="button">Export Layout Polygons JSON</button>
+        <button class="btn primary reset" id="leExportLayout" type="button">Export Map Layout JSON</button>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <button class="btn reset" id="leExportPng" type="button">Export PNG (conceptual)</button>
+        <label class="btn reset" for="leImport" style="text-align:center;cursor:pointer">Importar polígonos (JSON)
+          <input type="file" id="leImport" accept="application/json,.json" hidden></label>
+      </div>
+      <p class="fineprint" id="leStatus">Cargando layout… (seed: <code>data/calibration/layout-polygons.seed.json</code>)</p>
+      <p class="fineprint">Persistencia: <b>localStorage</b> (<code>kairos.layoutPolygons.v1</code>) + export/import
+        manual. Sin backend. Coordenadas en WGS84 reales del lote — <b>sin precisión catastral</b>.</p>
+    </fieldset>
+
     <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles y contexto ©
       OpenStreetMap contributors.</p>
   </aside>
@@ -200,6 +258,9 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="calibration.js"></script>
 <script src="osm-context.js"></script>
+<!-- ADDITIVE: editable layout polygons + "Layout on Map" overlay. Consumes the
+     read-only window.MapCalibration handle; does NOT alter calibration logic. -->
+<script src="layout-editor.js"></script>
 <script>
   /* Loading overlay control — presentation only; observes the coords panel that the
      map already updates ("Cargando lot.json…" → coordinates). Does NOT touch map logic. */

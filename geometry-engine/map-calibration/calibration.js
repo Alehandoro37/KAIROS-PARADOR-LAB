@@ -64,6 +64,10 @@
 
     applyToggles();
     updateCoords();
+    // Additive notification (presentation/integration only): lets the optional
+    // layout-editor.js re-sync its read-only "original lot" reference when the
+    // user nudges calibration. Does not affect calibration math.
+    window.dispatchEvent(new CustomEvent('kairos:lot-redraw'));
   }
   function applyToggles() {
     const showLot = $('toggleLot').checked, showV = $('toggleVertices').checked;
@@ -175,6 +179,10 @@
       map,
       getCentroid: () => ({ lon: centroid.lon, lat: centroid.lat }),
       getCalib: () => ({ ...calib }),
+      // Additive read-only accessor: the calibrated lot polygon as Leaflet [lat,lon]
+      // pairs. Used by layout-editor.js to seed the editable "usable area" from the
+      // REAL lot. Returns a copy; does not expose or alter calibration internals.
+      getLotLatLngs: () => latlngs(transformedPolygon()),
       bringLotToFront: () => { if (lotPolygon) lotPolygon.bringToFront(); if (vertexGroup) vertexGroup.bringToFront(); }
     };
     window.dispatchEvent(new CustomEvent('kairos:map-ready'));

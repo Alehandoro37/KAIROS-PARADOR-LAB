@@ -59,7 +59,9 @@ const required = [
   // Advanced Technical Roadmap (phased development guide + experience system CSS + versioned JSON)
   'technical-roadmap/index.html', 'web/css/experience-system.css', 'data/technical-development-roadmap.json',
   // Detailed Container Layout Map (architectural site-layout model + SVG renderer + versioned JSON)
-  'layout-map/index.html', 'web/js/layout-map.js', 'data/layout/container-layout.json'
+  'layout-map/index.html', 'web/js/layout-map.js', 'data/layout/container-layout.json',
+  // Map-Based Layout Calibration (editable polygons module + geo seed, on Map Calibration)
+  'geometry-engine/map-calibration/layout-editor.js', 'data/calibration/layout-polygons.seed.json'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
@@ -192,6 +194,54 @@ else {
   const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
   readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → ${href}`) : fail(`cross-nav: ${f} missing link (${href})`);
 });
+
+// Map-Based Layout Calibration — editable polygons + "Layout on Map" overlay on Map Calibration
+const mcPath = join(BASE, 'geometry-engine', 'map-calibration', 'index.html');
+if (!existsSync(mcPath)) { fail('missing map-calibration page for layout checks'); }
+else {
+  const MC = readFileSync(mcPath, 'utf8');
+  /Layout on Map/i.test(MC) ? ok('map-calibration: "Layout on Map" tools') : fail('map-calibration: missing "Layout on Map"');
+  /src=["']layout-editor\.js["']/i.test(MC) ? ok('map-calibration: layout-editor.js wired (additive)') : fail('map-calibration: layout-editor.js not referenced');
+  // editable polygon controls + export/import
+  (/id=["']leEdit["']/.test(MC) && /id=["']leAdd["']/.test(MC) && /id=["']leLayer["']/.test(MC)) ? ok('map-calibration: polygon edit controls') : fail('map-calibration: missing polygon edit controls');
+  (/id=["']leExportPoly["']/.test(MC) && /id=["']leExportLayout["']/.test(MC)) ? ok('map-calibration: layout export (polygons + map layout)') : fail('map-calibration: missing layout export');
+  /id=["']leImport["']/.test(MC) ? ok('map-calibration: polygon JSON import') : fail('map-calibration: missing polygon import');
+  // layout-on-map toggles (usable / rail / restrictions / container layout / circulation / landscape)
+  ['leShowLot', 'leShowUsable', 'leShowRail', 'leShowRestricted', 'leShowLayout', 'leShowCirc', 'leShowLand'].every(id => new RegExp(`id=["']${id}["']`).test(MC))
+    ? ok('map-calibration: layout toggles (lot/usable/rail/restrict/layout/circ/land)') : fail('map-calibration: missing layout toggles');
+  // no-false-precision labels present
+  (/requiere topograf[ií]a/i.test(MC) && /PRELIMINAR/i.test(MC) && /sin precisi[oó]n catastral/i.test(MC)) ? ok('map-calibration: no-false-precision labels') : fail('map-calibration: missing no-precision labels');
+  // rail-side opportunity exact, non-ownership label
+  /Zona de oportunidad visual \/ posible uso — validar propiedad, servidumbres y retiros/i.test(MC.replace(/\s+/g, ' ')) ? ok('map-calibration: rail-opportunity label (no ownership claim)') : fail('map-calibration: missing rail-opportunity label');
+}
+// layout-editor.js must NOT write lot.json and must be additive (uses the read-only handle)
+const lePath = join(BASE, 'geometry-engine', 'map-calibration', 'layout-editor.js');
+if (existsSync(lePath)) {
+  const LE = readFileSync(lePath, 'utf8');
+  /window\.MapCalibration/.test(LE) ? ok('layout-editor: uses read-only MapCalibration handle') : fail('layout-editor: does not use MapCalibration handle');
+  !/lot\.json['"]\s*,/.test(LE) && !/PUT|POST|writeFile/i.test(LE) ? ok('layout-editor: does not write lot.json / no network writes') : fail('layout-editor: suspicious write to lot.json');
+}
+// geo seed — schema, status, required keys
+const lpPath = join(BASE, 'data', 'calibration', 'layout-polygons.seed.json');
+if (!existsSync(lpPath)) { fail('missing data/calibration/layout-polygons.seed.json'); }
+else {
+  let P = null;
+  try { P = JSON.parse(readFileSync(lpPath, 'utf8')); } catch (e) { fail('layout-polygons seed not valid JSON: ' + e.message); }
+  if (P) {
+    /^kairos\.layout-polygons\//.test(P.schema || '') ? ok('layout-polygons seed: schema id') : fail('layout-polygons seed: bad/missing schema id');
+    P.status === 'PRELIMINARY_CONCEPTUAL' ? ok('layout-polygons seed: status PRELIMINARY_CONCEPTUAL') : fail('layout-polygons seed: wrong status');
+    ['source_lot_polygon', 'usable_area_polygon', 'rail_side_opportunity_polygon', 'restricted_zones', 'frontage_zone', 'service_zone', 'notes'].forEach(k =>
+      (k in P) ? ok('layout-polygons seed: has ' + k) : fail('layout-polygons seed: missing ' + k));
+    (Array.isArray(P.source_lot_polygon) && P.source_lot_polygon.length >= 3) ? ok('layout-polygons seed: source_lot_polygon from real lot') : fail('layout-polygons seed: bad source_lot_polygon');
+  }
+}
+// layout-map (legacy) must NOT present itself as the primary source
+const lmLegacyPath = join(BASE, 'layout-map', 'index.html');
+if (existsSync(lmLegacyPath)) {
+  const LM = readFileSync(lmLegacyPath, 'utf8').replace(/\s+/g, ' ');
+  (/fuente principal/i.test(LM) && /Map Calibration/i.test(LM) && /(legacy|secundaria)/i.test(LM)) ? ok('layout-map: marked secondary (source of truth = Map Calibration)') : fail('layout-map: not marked secondary / no source-of-truth pointer');
+  /href="\.\.\/map\/"/.test(readFileSync(lmLegacyPath, 'utf8')) ? ok('layout-map: links to Map Calibration (primary)') : fail('layout-map: missing link to Map Calibration');
+}
 
 // public landing (commercial entry) — root index.html
 const landingPath = join(BASE, 'index.html');
