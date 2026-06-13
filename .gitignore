@@ -21,4 +21,7 @@ Thumbs.db
 # ---- Exports generados por el Geometry Engine (no versionar a menos que se registren a mano) ----
 layout-export-*.json
 
+# ---- Build externo (generado por `npm run build:external`, no versionar) ----
+build/
+
 # NOTA: data/ y web/assets/renders/ SÍ se versionan (son fuentes del lab, no artefactos).

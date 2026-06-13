@@ -27,7 +27,9 @@
     "serve": "python3 -m http.server 8080",
     "serve:py": "python3 -m http.server 8080",
     "serve:node": "npx --yes http-server . -p 8080 -c-1",
-    "open": "open http://localhost:8080/web/"
+    "open": "open http://localhost:8080/web/",
+    "build:external": "node tools/build-external.mjs",
+    "serve:external": "python3 -m http.server 8090 --directory build"
   },
   "devDependencies": {
     "live-server": "^1.2.2"
