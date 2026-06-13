@@ -342,8 +342,9 @@ else {
   /id=["']vCanvas["']/.test(V) ? ok('3d-view: canvas stage') : fail('3d-view: missing canvas');
   /id=["']vFallback["']/.test(V) ? ok('3d-view: WebGL fallback element') : fail('3d-view: missing WebGL fallback');
   /id=["']vCams["']/.test(V) ? ok('3d-view: camera anchor controls') : fail('3d-view: missing camera controls');
-  /id=["']vExag["']/.test(V) ? ok('3d-view: terrain exaggeration control') : fail('3d-view: missing terrain exaggeration');
+  (/data-exag=["']1["']/.test(V) && /data-exag=["']3["']/.test(V) && /data-exag=["']6["']/.test(V)) ? ok('3d-view: terrain exaggeration 1×/3×/6×') : fail('3d-view: missing 1×/3×/6× exaggeration buttons');
   (/id=["']vTerrain["']/.test(V) && /id=["']vContainers["']/.test(V) && /id=["']vTrees["']/.test(V) && /id=["']vZones["']/.test(V)) ? ok('3d-view: layer toggles (terrain/containers/trees/zones)') : fail('3d-view: missing layer toggles');
+  (/id=["']vLabels["']/.test(V) && /id=["']vConflicts["']/.test(V)) ? ok('3d-view: labels + conflict toggles') : fail('3d-view: missing labels/conflict toggles');
   // NO CDN anywhere on the page (match real CDN hosts, not prose like "sin CDN")
   !/(cdn\.jsdelivr|unpkg\.com|cdnjs\.cloudflare|ajax\.googleapis|fonts\.googleapis|esm\.sh|skypack\.dev|\/\/cdn\.)/i.test(V) ? ok('3d-view: no CDN references') : fail('3d-view: CDN reference found');
 }
@@ -364,6 +365,7 @@ if (existsSync(appPath)) {
   (/terrain\/terrain-profile\.json/.test(A) && /spatial\/spatial-zones\.json/.test(A)) ? ok('3d-view app: loads terrain + spatial data (reuses existing)') : fail('3d-view app: does not load terrain/spatial data');
   /camera_anchors/.test(A) ? ok('3d-view app: uses camera anchors') : fail('3d-view app: missing camera anchors');
   /volume/.test(A) ? ok('3d-view app: container volumes (height placeholders)') : fail('3d-view app: missing container volumes');
+  /Validar retiro, servidumbre y permiso férreo/.test(A) ? ok('3d-view app: railway conflict label (tension to validate)') : fail('3d-view app: missing railway conflict label');
   !/lot\.json/.test(A) ? ok('3d-view app: does not touch lot.json') : fail('3d-view app: references lot.json');
 }
 // cross-navigation: every public page links to /3d-view/ (and the new page links back)

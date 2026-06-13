@@ -94,6 +94,8 @@
         <label><input type="checkbox" id="vContainers" checked> Contenedores / volúmenes</label>
         <label><input type="checkbox" id="vTrees" checked> Árboles (conservar/evaluar/retirar)</label>
         <label><input type="checkbox" id="vZones" checked> Zonas + restricciones</label>
+        <label><input type="checkbox" id="vLabels" checked> Etiquetas discretas</label>
+        <label><input type="checkbox" id="vConflicts" checked> Conflictos (tensión férrea)</label>
       </div>
       <div class="grp">
         <h4>Fases</h4>
@@ -102,13 +104,18 @@
         <label><input type="checkbox" id="vF3" checked> Fase 3 (reserva)</label>
       </div>
       <div class="grp">
-        <h4>Terrain exaggeration <output id="vExagOut">6×</output></h4>
-        <input type="range" id="vExag" min="1" max="14" step="1" value="6">
-        <p class="v-status">Relieve real bajo (~10 m); se exagera sutilmente para lectura. Conceptual.</p>
+        <h4>Terrain exaggeration</h4>
+        <div class="v-actrow" role="group" aria-label="Exageración del terreno">
+          <button class="act" data-exag="1" type="button" aria-pressed="false">1×</button>
+          <button class="act" data-exag="3" type="button" aria-pressed="true">3×</button>
+          <button class="act" data-exag="6" type="button" aria-pressed="false">6×</button>
+        </div>
+        <p class="v-status" id="vElevLegend">Elevación conceptual — aprox.</p>
       </div>
       <div class="grp">
         <h4>Cámara</h4>
         <div id="vCams"></div>
+        <p class="v-status" id="vViewNote">Cada vista comunica una decisión de diseño.</p>
         <div class="v-actrow"><button class="act" id="vReset" type="button">Reset / Top</button></div>
       </div>
       <div class="grp" style="border-bottom:0">
