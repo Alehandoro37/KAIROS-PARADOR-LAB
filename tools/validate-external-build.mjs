@@ -286,11 +286,33 @@ if (existsSync(mcPath)) {
   /fuente editable principal/i.test(Wn) && /presentaci[oó]n planim[eé]trica secundaria/i.test(Wn) && /visualizaci[oó]n derivada/i.test(Wn) ? ok('workspace: roles (editable core · planimetric secondary · derived 3D)') : fail('workspace: missing source-of-truth roles text');
   /id=["']wsExport3D["']/.test(W) && /Export Workspace for 3D/i.test(W) ? ok('workspace: "Export Workspace for 3D" button') : fail('workspace: missing Export-for-3D button');
   /alimenta la vista 3D|c[aá]rgalo en 3D/i.test(Wn) ? ok('workspace: export→3D explanation text') : fail('workspace: missing export→3D explanation');
+  // usability V1: generator, presets, zoom, plan view, save/reset, polygon ops
+  /id=["']wsGenerate["']/.test(W) ? ok('workspace: primitive layout generator button') : fail('workspace: missing Generate Layout button');
+  /id=["']wsPlanToggle["']/.test(W) && /id=["']wsPlan["']/.test(W) ? ok('workspace: Clean Plan View toggle + overlay') : fail('workspace: missing Clean Plan View');
+  (/data-ws-preset=["']clean["']/.test(W) && /data-ws-preset=["']full["']/.test(W) && /data-ws-preset=["']satellite["']/.test(W) && /data-ws-preset=["']construction["']/.test(W)) ? ok('workspace: layer presets (clean/full/satellite/construction)') : fail('workspace: missing layer presets');
+  (/id=["']wsZoomIn["']/.test(W) && /id=["']wsFitSel["']/.test(W) && /id=["']wsFitUsable["']/.test(W) && /id=["']wsFitLot["']/.test(W) && /id=["']wsZoomLevel["']/.test(W)) ? ok('workspace: advanced zoom (in/out/fit selected/usable/lot + level)') : fail('workspace: missing advanced zoom controls');
+  (/id=["']wsSave["']/.test(W) && /id=["']wsReset["']/.test(W) && /id=["']wsSaved["']/.test(W)) ? ok('workspace: save/reset + saved indicator') : fail('workspace: missing save/reset/indicator');
+  (/id=["']wsPolySel["']/.test(W) && /id=["']wsPolyScaleUp["']/.test(W) && /data-ws-nudge=/.test(W) && /id=["']wsPolyDel["']/.test(W)) ? ok('workspace: polygon move/scale/delete controls') : fail('workspace: missing polygon move/scale/delete');
 }
 const wsPathExp = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPathExp)) {
   const WJ2 = readFileSync(wsPathExp, 'utf8');
   (/coordinate_system: ['"]WGS84 EPSG:4326['"]/.test(WJ2) && /generated_at/.test(WJ2) && /source: ['"]map-calibration['"]/.test(WJ2) && /validation_summary/.test(WJ2)) ? ok('workspace.js: spatial-workspace export schema (generated_at/CRS/source/summary)') : fail('workspace.js: incomplete spatial-workspace schema');
+  // usability V1 behaviours
+  (/function deleteSelected/.test(WJ2) && /Delete|Backspace/.test(WJ2)) ? ok('workspace.js: Delete/Backspace key deletes selection') : fail('workspace.js: missing delete-key handler');
+  (/function generatePrimitiveLayout/.test(WJ2) && /GENERATED_CONCEPTUAL/.test(WJ2)) ? ok('workspace.js: primitive layout generator (GENERATED_CONCEPTUAL)') : fail('workspace.js: missing primitive generator');
+  /Replace|replace|append/.test(WJ2) ? ok('workspace.js: generator replace/append prompt') : fail('workspace.js: missing replace/append choice');
+  (/scalePolygon|scalePoly/.test(WJ2) && /movePolygon|nudgePoly|bindPolygonDrag/.test(WJ2)) ? ok('workspace.js: polygon move + scale logic') : fail('workspace.js: missing polygon move/scale logic');
+  /function applyPreset/.test(WJ2) ? ok('workspace.js: layer presets logic') : fail('workspace.js: missing presets logic');
+  (/function togglePlan/.test(WJ2) && /function renderPlan/.test(WJ2)) ? ok('workspace.js: clean plan view (same data)') : fail('workspace.js: missing clean plan view');
+  (/fitUsable/.test(WJ2) && /fitLot/.test(WJ2) && /fitSelected/.test(WJ2)) ? ok('workspace.js: fit usable/lot/selected') : fail('workspace.js: missing fit-zoom logic');
+  /KairosLayout/.test(WJ2) && !/lot\.json/.test(WJ2) ? ok('workspace.js: polygon ops via KairosLayout (no lot.json write)') : fail('workspace.js: lot.json reference or missing KairosLayout');
+}
+// layout-editor additive mutators (move/scale/delete) — present & no lot.json write
+const lePathExp = join(BASE, 'geometry-engine', 'map-calibration', 'layout-editor.js');
+if (existsSync(lePathExp)) {
+  const LE2 = readFileSync(lePathExp, 'utf8');
+  (/movePolygon:/.test(LE2) && /scalePolygon:/.test(LE2) && /deleteRestricted:/.test(LE2)) ? ok('layout-editor: additive move/scale/delete mutators') : fail('layout-editor: missing polygon mutators');
 }
 const wsPath = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPath)) {

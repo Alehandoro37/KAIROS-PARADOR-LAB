@@ -40,7 +40,7 @@
   const NOTE_CATS = ['general', 'árbol', 'borde de terreno', 'zona despejada', 'acceso posible', 'sombra/vegetación'];
 
   const state = {
-    mode: 'select', addType: 'container-20', noteCat: 'general', snap: false,
+    mode: 'select', addType: 'container-20', noteCat: 'general', snap: false, selPoly: null,
     elements: [], notes: [], sel: null, layers: {}, esri: null, veg: null, anchors: []
   };
 
@@ -64,7 +64,7 @@
   }
 
   // ---- persistence ----------------------------------------------------------
-  const save = () => { try { localStorage.setItem(LS_EL, JSON.stringify(state.elements)); localStorage.setItem(LS_NOTE, JSON.stringify(state.notes)); } catch (e) {} };
+  const save = () => { try { localStorage.setItem(LS_EL, JSON.stringify(state.elements)); localStorage.setItem(LS_NOTE, JSON.stringify(state.notes)); } catch (e) {} setSaved('✓ Saved locally'); };
   const load = () => { try { state.elements = JSON.parse(localStorage.getItem(LS_EL) || '[]'); state.notes = JSON.parse(localStorage.getItem(LS_NOTE) || '[]'); } catch (e) { state.elements = []; state.notes = []; } };
 
   // ---- constraint validation ------------------------------------------------
@@ -232,6 +232,137 @@
     fr.readAsText(file);
   }
 
+  // ---- save state indicator -------------------------------------------------
+  function setSaved(txt) { const e = $('wsSaved'); if (e) e.textContent = txt; }
+  function saveToBrowser() { save(); setSaved('✓ Saved locally'); }
+  function resetToSeed() {
+    if (!confirm('¿Reset al seed? Se borran elementos y notas locales (los polígonos vuelven al seed). El lote original no se modifica.')) return;
+    try { localStorage.removeItem(LS_EL); localStorage.removeItem(LS_NOTE); localStorage.removeItem('kairos.layoutPolygons.v1'); } catch (e) {}
+    state.elements = []; state.notes = []; state.sel = null;
+    renderElements(); renderNotes(); showProps(); setSaved('Reset · recarga para re-seed polígonos');
+  }
+  // hook save() to update the indicator
+  const _save = save; // eslint-disable-line
+  function saveAll() { _save(); setSaved('✓ Saved locally'); }
+
+  // ---- delete key -----------------------------------------------------------
+  function deleteSelected() {
+    if (typeof state.sel === 'string' && state.sel.startsWith('note:')) {
+      const id = state.sel.slice(5); state.notes = state.notes.filter(n => n.id !== id); state.sel = null; saveAll(); renderNotes(); showProps(); refreshStatus(); return;
+    }
+    const el = state.elements.find(x => x.id === state.sel); if (!el) return;
+    state.elements = state.elements.filter(x => x.id !== el.id); state.sel = null; saveAll(); renderElements(); showProps();
+  }
+
+  // ---- polygon select / move (drag interior) / scale / delete ---------------
+  function scalePoly(f) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.scalePolygon(state.selPoly, f); renderElements(); setSaved('✓ Saved locally'); } }
+  function nudgePoly(dLat, dLon) { if (state.selPoly && window.KairosLayout) { window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); renderElements(); setSaved('✓ Saved locally'); } }
+  function deletePoly() {
+    if (!state.selPoly) return;
+    if (!state.selPoly.startsWith('rz:')) { alert('Solo las zonas restringidas se pueden borrar; las categorías base se editan/escalan (el lote original nunca se borra).'); return; }
+    if (!confirm('¿Borrar esta zona restringida?')) return;
+    window.KairosLayout.deleteRestricted(state.selPoly.slice(3)); state.selPoly = null; renderElements();
+  }
+  // drag the whole selected polygon by dragging the map interior (Move mode)
+  function bindPolygonDrag() {
+    let drag = null;
+    map.on('mousedown', (e) => { if (state.mode !== 'move' || !state.selPoly) return; drag = e.latlng; map.dragging.disable(); });
+    map.on('mousemove', (e) => { if (!drag) return; const dLat = e.latlng.lat - drag.lat, dLon = e.latlng.lng - drag.lng; if (window.KairosLayout) window.KairosLayout.movePolygon(state.selPoly, dLat, dLon); drag = e.latlng; renderElements(); });
+    map.on('mouseup', () => { if (drag) { drag = null; map.dragging.enable(); setSaved('✓ Saved locally'); } });
+  }
+
+  // ---- advanced zoom --------------------------------------------------------
+  function fitTo(latlngs) { if (latlngs && latlngs.length) map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40], maxZoom: 20 }); }
+  function fitUsable() { const P = polys(); fitTo(P.usable_area_polygon); }
+  function fitLot() { const r = (window.KairosLayout && window.KairosLayout.getLotRef && window.KairosLayout.getLotRef()) || (polys().source_lot_polygon); fitTo(r); }
+  function fitSelected() {
+    if (state.selPoly) { const r = window.KairosLayout && window.KairosLayout.getPolygons && ringFromPolys(state.selPoly); if (r) return fitTo(r); }
+    const el = state.elements.find(x => x.id === state.sel); if (el) return fitTo(footprint(el));
+    fitUsable();
+  }
+  function ringFromPolys(key) { const P = polys(); if (key === 'usable') return P.usable_area_polygon; if (key === 'rail') return P.rail_side_opportunity_polygon; if (key === 'frontage') return P.frontage_zone && P.frontage_zone.polygon; if (key === 'service') return P.service_zone && P.service_zone.polygon; if (key.startsWith('rz:')) { const z = (P.restricted_zones || []).find(r => r.id === key.slice(3)); return z && z.polygon; } return null; }
+  function updateZoom() { if ($('wsZoomLevel')) $('wsZoomLevel').textContent = 'z' + map.getZoom(); }
+
+  // ---- layer visibility presets ---------------------------------------------
+  const PRESETS = {
+    'clean': { on: ['leShowLot', 'leShowUsable', 'leShowRail', 'tsZones', 'tsContainers'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'leShowRestricted', 'leShowLayout', 'leShowCirc', 'leShowLand'] },
+    'full': { on: ['leShowLot', 'leShowUsable', 'leShowRail', 'leShowRestricted', 'tsTerrain', 'tsSlope', 'tsDrainage', 'tsZones', 'tsContainers', 'tsTrees', 'tsRailway'], off: [] },
+    'satellite': { on: ['leShowLot', 'leShowUsable', 'leShowRail'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsContainers', 'tsTrees', 'leShowLayout'], base: 'satellite' },
+    'construction': { on: ['leShowLot', 'leShowUsable', 'leShowRestricted', 'tsZones', 'tsRailway'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'tsContainers'] }
+  };
+  function applyPreset(name) {
+    const p = PRESETS[name]; if (!p) return;
+    const setChk = (id, v) => { const c = $(id); if (c && c.type === 'checkbox') { c.checked = v; c.dispatchEvent(new Event('change')); } };
+    (p.on || []).forEach(id => setChk(id, true)); (p.off || []).forEach(id => setChk(id, false));
+    if (p.base) { const sel = $('baseLayer'); if (sel) { sel.value = p.base; sel.dispatchEvent(new Event('change')); } }
+    document.querySelectorAll('[data-ws-preset]').forEach(b => b.setAttribute('aria-pressed', b.getAttribute('data-ws-preset') === name ? 'true' : 'false'));
+    if (name === 'satellite') setMode('notes'); // satellite markup
+    setSaved('Preset: ' + name);
+  }
+
+  // ---- primitive layout generator -------------------------------------------
+  function generatePrimitiveLayout() {
+    const P = polys(), U = P.usable_area_polygon; if (!U) { alert('No hay área utilizable definida (polígono usable).'); return; }
+    const generated = state.elements.filter(e => e.status === 'GENERATED_CONCEPTUAL');
+    if (state.elements.length) {
+      const ans = prompt('Ya hay elementos. Escribe "replace" para reemplazar el layout generado, o "append" para añadir:', 'replace');
+      if (ans === null) return;
+      if (/^replace/i.test(ans)) state.elements = state.elements.filter(e => e.status !== 'GENERATED_CONCEPTUAL');
+      // append → keep all
+    }
+    const c = centroid(U), b = (() => { const la = U.map(p => p[0]), lo = U.map(p => p[1]); return { s: Math.min(...la), n: Math.max(...la), w: Math.min(...lo), e: Math.max(...lo) }; })();
+    const fz = P.frontage_zone && centroid(P.frontage_zone.polygon);
+    const sz = P.service_zone && centroid(P.service_zone.polygon);
+    const op = P.rail_side_opportunity_polygon && centroid(P.rail_side_opportunity_polygon);
+    const lerp = (a, t) => [c[0] + (a[0] - c[0]) * t, c[1] + (a[1] - c[1]) * t];
+    const add = (type, at, rot, note) => { const t = TYPES[type]; if (!at) return; state.elements.push({ id: uid(), type, w: t.w, d: t.d, rotation: rot || 0, phase: 'F1', note: note || '', lat: at[0], lon: at[1], status: 'GENERATED_CONCEPTUAL' }); };
+    // parking + gravel toward road frontage
+    add('parking-bay', fz ? lerp(fz, 0.85) : [b.s + (b.n - b.s) * 0.12, c[1]], 0, 'parqueo hacia frente vial');
+    add('parking-bay', fz ? lerp(fz, 0.7) : [b.s + (b.n - b.s) * 0.18, c[1]], 0, 'parqueo');
+    // deck toward rail opportunity / edge
+    add('deck', op ? lerp(op, 0.55) : [c[0], b.e - (b.e - b.w) * 0.18], -15, 'deck hacia borde férreo (validar retiro)');
+    // kitchen + service near service spine
+    add('kitchen', sz ? lerp(sz, 0.65) : [c[0] + (b.n - b.s) * 0.1, b.w + (b.e - b.w) * 0.2], 0, 'cocina junto a service spine');
+    add('service-point', sz ? lerp(sz, 0.85) : [c[0] + (b.n - b.s) * 0.15, b.w + (b.e - b.w) * 0.18], 0, 'servicios / técnica');
+    // bath accessible but discreet
+    add('bath', [c[0] - (b.n - b.s) * 0.06, b.w + (b.e - b.w) * 0.28], 0, 'baños accesibles y discretos');
+    // 2–4 containers / pavilions around the plaza centre
+    add('container-40', [c[0], c[1]], 0, 'pabellón gastronómico');
+    add('container-20', [c[0] + (b.n - b.s) * 0.08, c[1] + (b.e - b.w) * 0.06], 20, 'café');
+    add('bar', [c[0] - (b.n - b.s) * 0.05, c[1] + (b.e - b.w) * 0.05], 0, 'bar / lounge');
+    // entrance signage near frontage
+    add('sign', fz ? lerp(fz, 0.95) : [b.s + (b.n - b.s) * 0.08, c[1]], 0, 'signage de entrada');
+    // preserve trees if vegetation data exists
+    if (state.veg) (state.veg.clusters || []).filter(t => t.action === 'preserve').slice(0, 3).forEach(t => add('tree-preserve', t.center, 0, 'árbol a conservar'));
+    saveAll(); renderElements(); refreshStatus();
+    setSaved('Layout primitivo generado (GENERATED_CONCEPTUAL)');
+  }
+
+  // ---- clean plan view (same data, no map) ----------------------------------
+  function togglePlan() {
+    const host = $('wsPlan'); if (!host) return;
+    const on = host.style.display === 'none' || !host.style.display;
+    host.style.display = on ? 'block' : 'none';
+    const btn = $('wsPlanToggle'); if (btn) btn.textContent = on ? 'Map View' : 'Clean Plan View';
+    if (on) renderPlan();
+  }
+  function renderPlan() {
+    const host = $('wsPlan'); if (!host) return; const P = polys(), U = P.usable_area_polygon;
+    const all = [].concat(U || [], ...state.elements.map(footprint));
+    if (!all.length) { host.innerHTML = '<div class="ws-planmsg">Sin área utilizable / elementos para el plano.</div>'; return; }
+    const la = all.map(p => p[0]), lo = all.map(p => p[1]); const s = Math.min(...la), n = Math.max(...la), w = Math.min(...lo), e = Math.max(...lo);
+    const W = 1000, H = 1000, pad = 60, sc = Math.min((W - 2 * pad) / ((e - w) || 1e-6), (H - 2 * pad) / ((n - s) || 1e-6));
+    const X = (lon) => pad + (lon - w) * sc, Y = (lat) => H - pad - (lat - s) * sc;
+    const path = (ring2) => ring2.map((p, i) => (i ? 'L' : 'M') + X(p[1]).toFixed(1) + ' ' + Y(p[0]).toFixed(1)).join(' ') + ' Z';
+    let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">`;
+    for (let g = pad; g <= W - pad; g += 40) svg += `<line x1="${g}" y1="${pad}" x2="${g}" y2="${H - pad}" stroke="rgba(143,229,255,.06)"/><line x1="${pad}" y1="${g}" x2="${W - pad}" y2="${g}" stroke="rgba(143,229,255,.06)"/>`;
+    if (U) svg += `<path d="${path(U)}" fill="rgba(95,192,138,.1)" stroke="#5fc08a" stroke-width="2"/>`;
+    (P.restricted_zones || []).forEach(z => svg += `<path d="${path(z.polygon)}" fill="rgba(224,121,90,.12)" stroke="#e0795a" stroke-width="1.5" stroke-dasharray="5 4"/>`);
+    state.elements.forEach(el => { const t = TYPES[el.type] || {}; svg += `<path d="${path(footprint(el))}" fill="${t.color || '#cfe'}" fill-opacity="0.55" stroke="${STATUS_COLOR[el._status || 'ok']}" stroke-width="1.6"/>`; });
+    svg += `<text x="${pad}" y="${H - 18}" fill="#cdb98a" font-family="ui-monospace,monospace" font-size="16">CLEAN PLAN VIEW · conceptual · mismos datos del workspace · PRELIMINAR</text></svg>`;
+    host.innerHTML = svg;
+  }
+
   // ---- UI wiring ------------------------------------------------------------
   function buildPalette() {
     const pal = $('wsPaletteList'); if (!pal) return;
@@ -251,6 +382,31 @@
     $('wsExportNotes') && $('wsExportNotes').addEventListener('click', () => dl(notesDoc(), 'logos-parador-notes.json'));
     $('wsImport') && $('wsImport').addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) importJson(e.target.files[0]); });
     map.on('click', (e) => { if (state.mode === 'add') addElementAt(e.latlng); else if (state.mode === 'notes') addNoteAt(e.latlng); });
+    // delete key
+    document.addEventListener('keydown', (e) => { if ((e.key === 'Delete' || e.key === 'Backspace') && state.sel != null) { const tag = (e.target && e.target.tagName) || ''; if (/INPUT|TEXTAREA|SELECT/.test(tag)) return; e.preventDefault(); deleteSelected(); } });
+    // save / reset
+    $('wsSave') && $('wsSave').addEventListener('click', saveToBrowser);
+    $('wsReset') && $('wsReset').addEventListener('click', resetToSeed);
+    // primitive layout generator
+    $('wsGenerate') && $('wsGenerate').addEventListener('click', generatePrimitiveLayout);
+    // clean plan view
+    $('wsPlanToggle') && $('wsPlanToggle').addEventListener('click', togglePlan);
+    // layer presets
+    document.querySelectorAll('[data-ws-preset]').forEach(b => b.addEventListener('click', () => applyPreset(b.getAttribute('data-ws-preset'))));
+    // advanced zoom
+    $('wsZoomIn') && $('wsZoomIn').addEventListener('click', () => map.zoomIn(2));
+    $('wsZoomOut') && $('wsZoomOut').addEventListener('click', () => map.zoomOut(2));
+    $('wsFitSel') && $('wsFitSel').addEventListener('click', fitSelected);
+    $('wsFitUsable') && $('wsFitUsable').addEventListener('click', fitUsable);
+    $('wsFitLot') && $('wsFitLot').addEventListener('click', fitLot);
+    map.on('zoomend', updateZoom); updateZoom();
+    // polygon selector + ops
+    const ps = $('wsPolySel'); if (ps) ps.addEventListener('change', () => { state.selPoly = ps.value || null; });
+    $('wsPolyScaleUp') && $('wsPolyScaleUp').addEventListener('click', () => scalePoly(1.05));
+    $('wsPolyScaleDn') && $('wsPolyScaleDn').addEventListener('click', () => scalePoly(0.95));
+    $('wsPolyDel') && $('wsPolyDel').addEventListener('click', deletePoly);
+    document.querySelectorAll('[data-ws-nudge]').forEach(b => b.addEventListener('click', () => { const d = 0.00004, m = b.getAttribute('data-ws-nudge'); nudgePoly(m === 'n' ? d : m === 's' ? -d : 0, m === 'e' ? d : m === 'w' ? -d : 0); }));
+    bindPolygonDrag();
   }
 
   function boot() {
@@ -259,7 +415,7 @@
     load(); buildPalette(); bind(); setupSatellite();
     fetch(DATA + 'spatial/vegetation-strategy.json').then(r => r.ok ? r.json() : null).then(v => { state.veg = v; renderElements(); }).catch(() => {});
     fetch(DATA + 'spatial/spatial-zones.json').then(r => r.ok ? r.json() : null).then(z => { state.anchors = (z && z.camera_anchors) || []; }).catch(() => {});
-    renderElements(); renderNotes(); showProps(); setMode('select');
+    renderElements(); renderNotes(); showProps(); setMode('select'); setSaved('✓ Saved locally');
   }
 
   if (window.MapCalibration && window.MapCalibration.map) boot();

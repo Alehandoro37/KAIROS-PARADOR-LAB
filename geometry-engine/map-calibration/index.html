@@ -47,9 +47,9 @@
     .offline-banner.show{display:block}
     .leaflet-container{font-family:var(--mono)}
     /* editable layout vertices (layout-editor.js) — draggable handles + hover */
-    .le-vtx{background:#e7b15a;border:2px solid #06141d;border-radius:50%;width:14px;height:14px;
+    .le-vtx{background:#e7b15a;border:2px solid #06141d;border-radius:50%;width:18px;height:18px;
       box-shadow:0 0 0 2px rgba(231,177,90,.45);cursor:grab;transition:transform .1s}
-    .le-vtx:hover{transform:scale(1.4);box-shadow:0 0 0 3px rgba(231,177,90,.6)}
+    .le-vtx:hover{transform:scale(1.5);box-shadow:0 0 0 4px rgba(231,177,90,.65)}
     .le-vtx:active{cursor:grabbing}
     #leImport{position:absolute;width:0;height:0;opacity:0}
     /* spatial source-of-truth chip + big disclaimer + terrain-spatial labels */
@@ -94,6 +94,14 @@
     .ws-b:hover{border-color:var(--gold);color:#fff}
     .ws-x{background:none;border:0;color:#f3c9bb;cursor:pointer;font-size:14px}
     .ws-status{color:var(--gold);font-size:11px;margin:0 0 8px}
+    .ws-lbl{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:10px 0 4px}
+    .ws-b[aria-pressed="true"]{background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border-color:transparent}
+    .ws-plan{position:absolute;left:24px;right:24px;top:24px;height:calc(100vh - 48px);z-index:1200;background:#06141d;
+      background-image:radial-gradient(120% 80% at 80% -10%,rgba(23,86,92,.28),rgba(5,16,26,0) 60%);
+      border:1px solid rgba(143,229,255,.2);border-radius:22px;overflow:hidden}
+    .ws-plan svg{display:block;width:100%;height:100%}
+    @media(max-width:900px){ .ws-plan{left:14px;right:14px;top:14px;height:68vh} }
+    .ws-planmsg{display:grid;place-items:center;height:100%;color:#9cc6dd;font:13px var(--mono);text-align:center;padding:20px}
     .ws-hint{color:#9cc6dd;font-size:11px;line-height:1.5;margin:6px 0 0}
     /* element + note markers */
     .ws-el span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(4,16,28,.78);border:1px solid rgba(143,229,255,.4);color:#eaf6ff;font:600 10px var(--mono);padding:2px 6px;border-radius:7px;cursor:grab}
@@ -364,6 +372,8 @@
       <button class="ws-tb" data-ws-mode="move" aria-pressed="false" type="button">Move</button>
       <button class="ws-tb" data-ws-mode="notes" aria-pressed="false" type="button">Notes</button>
       <span class="ws-sep"></span>
+      <button class="ws-tb" id="wsGenerate" type="button" title="Generar layout primitivo dentro del área utilizable">Generate Layout</button>
+      <button class="ws-tb" id="wsPlanToggle" type="button" title="Vista plano limpio (mismos datos, sin mapa)">Clean Plan View</button>
       <button class="ws-tb" id="wsExportWorkspace" type="button" title="Export spatial-workspace.json">Export</button>
       <label class="ws-tb" for="wsImport" style="cursor:pointer">Import<input type="file" id="wsImport" accept="application/json,.json" hidden></label>
     </div>
@@ -385,7 +395,47 @@
       <div class="ws-props" id="wsProps"><p class="ws-hint">Selecciona un elemento para ver/editar sus propiedades.</p></div>
       <div class="ws-side">
         <p class="ws-status" id="wsStatus">Workspace listo · PRELIMINAR</p>
-        <button class="ws-b primary" id="wsExport3D" type="button" style="width:100%;background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border:0;font-weight:700">Export Workspace for 3D</button>
+        <p class="ws-status" id="wsSaved" style="color:#bdeed3">✓ Saved locally</p>
+        <div class="ws-exports">
+          <button class="ws-b" id="wsSave" type="button">Save to browser</button>
+          <button class="ws-b" id="wsReset" type="button">Reset to seed</button>
+        </div>
+        <p class="ws-lbl">Layer presets</p>
+        <div class="ws-exports">
+          <button class="ws-b" data-ws-preset="clean" aria-pressed="false" type="button">Clean Design</button>
+          <button class="ws-b" data-ws-preset="full" aria-pressed="false" type="button">Full Analysis</button>
+          <button class="ws-b" data-ws-preset="satellite" aria-pressed="false" type="button">Satellite Markup</button>
+          <button class="ws-b" data-ws-preset="construction" aria-pressed="false" type="button">Construction</button>
+        </div>
+        <p class="ws-lbl">Zoom <span id="wsZoomLevel" style="color:#9cc6dd">z18</span></p>
+        <div class="ws-exports">
+          <button class="ws-b" id="wsZoomIn" type="button">Zoom +</button>
+          <button class="ws-b" id="wsZoomOut" type="button">Zoom −</button>
+          <button class="ws-b" id="wsFitSel" type="button">Fit selected</button>
+          <button class="ws-b" id="wsFitUsable" type="button">Fit usable</button>
+          <button class="ws-b" id="wsFitLot" type="button">Fit lot</button>
+        </div>
+        <p class="ws-lbl">Polígono (mover / escalar / borrar)</p>
+        <select id="wsPolySel" style="width:100%;background:rgba(4,16,28,.6);color:#eaf6ff;border:1px solid rgba(143,229,255,.28);border-radius:8px;padding:6px;font:12px var(--mono)">
+          <option value="">— selecciona polígono —</option>
+          <option value="usable">Área utilizable</option>
+          <option value="rail">Oportunidad ferrocarril</option>
+          <option value="frontage">Frente / parqueo</option>
+          <option value="service">Servicio</option>
+          <option value="rz:rz-rail-setback">Restringido · retiro férreo</option>
+          <option value="rz:rz-drainage">Restringido · zona baja</option>
+        </select>
+        <div class="ws-exports" style="margin-top:6px">
+          <button class="ws-b" id="wsPolyScaleUp" type="button">Escala +5%</button>
+          <button class="ws-b" id="wsPolyScaleDn" type="button">Escala −5%</button>
+          <button class="ws-b" data-ws-nudge="n" type="button">↑</button>
+          <button class="ws-b" data-ws-nudge="s" type="button">↓</button>
+          <button class="ws-b" data-ws-nudge="w" type="button">←</button>
+          <button class="ws-b" data-ws-nudge="e" type="button">→</button>
+          <button class="ws-b" id="wsPolyDel" type="button">Borrar zona</button>
+        </div>
+        <p class="ws-hint">En modo <b>Move</b>, arrastra el interior del mapa para mover el polígono seleccionado completo.</p>
+        <button class="ws-b primary" id="wsExport3D" type="button" style="width:100%;margin-top:6px;background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border:0;font-weight:700">Export Workspace for 3D</button>
         <p class="ws-hint">Este archivo (<code>spatial-workspace.json</code>) <b>alimenta la vista 3D conceptual</b>.
           <b>Exporta el workspace y cárgalo en 3D para ver volumetría conceptual.</b></p>
         <div class="ws-exports">
@@ -398,6 +448,9 @@
           planimétrica secundaria · 3D = visualización derivada.</p>
       </div>
     </div>
+
+    <!-- Clean Plan View overlay (same workspace data, no map/satellite) -->
+    <div class="ws-plan" id="wsPlan" style="display:none" aria-label="Clean plan view"></div>
   </div>
 
 </div>

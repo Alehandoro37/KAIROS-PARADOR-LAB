@@ -260,7 +260,17 @@
     bind(); render();
     // Additive read-only accessor: lets terrain-spatial.js read the live (possibly
     // edited) layout polygons for the constraint engine. Read-only; never writes here.
-    window.KairosLayout = { getPolygons: () => state.poly, getLotRef: () => lotRef };
+    // Additive mutators (used by workspace.js for move/scale/delete): they only edit
+    // the editable polygon doc + re-render/persist; lot.json is never touched.
+    window.KairosLayout = {
+      getPolygons: () => state.poly,
+      getLotRef: () => lotRef,
+      refresh: () => { persist(); render(); },
+      centroidOf: (key) => { const r = ring(key); return r ? centroid(r) : null; },
+      movePolygon: (key, dLat, dLon) => { const r = ring(key); if (r) { r.forEach(p => { p[0] += dLat; p[1] += dLon; }); persist(); render(); return true; } return false; },
+      scalePolygon: (key, f) => { const r = ring(key); if (r) { const c = centroid(r); r.forEach(p => { p[0] = c[0] + (p[0] - c[0]) * f; p[1] = c[1] + (p[1] - c[1]) * f; }); persist(); render(); return true; } return false; },
+      deleteRestricted: (id) => { if (state.poly && state.poly.restricted_zones) { state.poly.restricted_zones = state.poly.restricted_zones.filter(z => z.id !== id); persist(); render(); return true; } return false; }
+    };
     // keep the calibrated lot reference in sync if the user nudges calibration
     window.addEventListener('kairos:lot-redraw', () => {
       try { lotRef = window.MapCalibration.getLotLatLngs(); render(); } catch (e) { /* ignore */ }
