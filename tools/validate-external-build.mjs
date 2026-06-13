@@ -345,6 +345,8 @@ else {
   (/data-exag=["']1["']/.test(V) && /data-exag=["']3["']/.test(V) && /data-exag=["']6["']/.test(V)) ? ok('3d-view: terrain exaggeration 1×/3×/6×') : fail('3d-view: missing 1×/3×/6× exaggeration buttons');
   (/id=["']vTerrain["']/.test(V) && /id=["']vContainers["']/.test(V) && /id=["']vTrees["']/.test(V) && /id=["']vZones["']/.test(V)) ? ok('3d-view: layer toggles (terrain/containers/trees/zones)') : fail('3d-view: missing layer toggles');
   (/id=["']vLabels["']/.test(V) && /id=["']vConflicts["']/.test(V)) ? ok('3d-view: labels + conflict toggles') : fail('3d-view: missing labels/conflict toggles');
+  (/id=["']vRoad["']/.test(V) && /id=["']vRailway["']/.test(V) && /id=["']vAccess["']/.test(V) && /id=["']vSetbacks["']/.test(V)) ? ok('3d-view: context toggles (road/railway/access/setbacks)') : fail('3d-view: missing site-context toggles');
+  /Contexto vial\/férreo aproximado — validar con levantamiento y normativa/i.test(V.replace(/\s+/g, ' ')) ? ok('3d-view: conceptual context validation label') : fail('3d-view: missing conceptual context label');
   // NO CDN anywhere on the page (match real CDN hosts, not prose like "sin CDN")
   !/(cdn\.jsdelivr|unpkg\.com|cdnjs\.cloudflare|ajax\.googleapis|fonts\.googleapis|esm\.sh|skypack\.dev|\/\/cdn\.)/i.test(V) ? ok('3d-view: no CDN references') : fail('3d-view: CDN reference found');
 }
@@ -366,6 +368,9 @@ if (existsSync(appPath)) {
   /camera_anchors/.test(A) ? ok('3d-view app: uses camera anchors') : fail('3d-view app: missing camera anchors');
   /volume/.test(A) ? ok('3d-view app: container volumes (height placeholders)') : fail('3d-view app: missing container volumes');
   /Validar retiro, servidumbre y permiso férreo/.test(A) ? ok('3d-view app: railway conflict label (tension to validate)') : fail('3d-view app: missing railway conflict label');
+  /osm\/osm-context-seed\.json/.test(A) ? ok('3d-view app: loads OSM road/rail context (real geometry)') : fail('3d-view app: does not load OSM context');
+  (/buildContext/.test(A) && /category === ['"]rail['"]|category === ['"]roads['"]|'roads'|'rail'/.test(A)) ? ok('3d-view app: builds road + railway site context') : fail('3d-view app: missing road/railway context build');
+  (/ctx-overall/.test(A) && /ctx-railway-edge/.test(A) && /ctx-arrival-road/.test(A) && /ctx-top/.test(A)) ? ok('3d-view app: context cameras (road+lot+rail)') : fail('3d-view app: missing context cameras');
   !/lot\.json/.test(A) ? ok('3d-view app: does not touch lot.json') : fail('3d-view app: references lot.json');
 }
 // cross-navigation: every public page links to /3d-view/ (and the new page links back)

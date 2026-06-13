@@ -39,7 +39,11 @@ const VIEW_NOTE = {
   'cam-railway-sunset': 'Identidad férrea: deck al atardecer — tensión a validar (retiros/servidumbre).',
   'cam-plaza': 'Corazón social: plaza permeable, food y sombra.',
   'cam-lounge': 'Remate vertical: Railway Lounge Tower mirando el corredor.',
-  'cam-wellness': 'Retiro tranquilo al norte — vegetación como buffer.'
+  'cam-wellness': 'Retiro tranquilo al norte — vegetación como buffer.',
+  'ctx-arrival-road': 'Arrival from Road — transición Troncal → parador (acceso y signage).',
+  'ctx-railway-edge': 'Railway Edge — borde férreo: identidad y retiro a validar.',
+  'ctx-overall': 'Overall Site Context — lote entre carretera y ferrocarril.',
+  'ctx-top': 'Top Context View — planta: Troncal · lote · Ferrocarril.'
 };
 
 function webglOK() {
@@ -156,8 +160,8 @@ function setExag(v) {
   t.points.forEach(p => { map[`${p.r}_${p.c}`] = vi++; });
   t.points.forEach(p => { const y = (p.elev - min) * v; p._y = y; pos.setY(map[`${p.r}_${p.c}`], y); });
   pos.needsUpdate = true; mesh.geometry.computeVertexNormals();
-  ['containers', 'trees', 'zones', 'labels', 'conflicts'].forEach(k => { if (state.groups[k]) state.scene.remove(state.groups[k]); });
-  buildContainers(); buildTrees(); buildZones(); updateElevLegend(); applyToggles(); render();
+  ['containers', 'trees', 'zones', 'labels', 'conflicts', 'road', 'railway', 'access', 'setbacks'].forEach(k => { if (state.groups[k]) state.scene.remove(state.groups[k]); });
+  buildContainers(); buildTrees(); buildZones(); buildContext(); updateElevLegend(); applyToggles(); render();
 }
 
 // ---- architectural containers ---------------------------------------------
@@ -283,11 +287,100 @@ function buildZones() {
   });
 }
 
+// ---- road / railway site context (REAL OSM geometry where available) ------
+// ribbon mesh from a polyline of world points (flat strip of given width)
+function ribbon(pts, width, color, opts) {
+  const hw = width / 2, verts = [], idx = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let dx = b.x - a.x, dz = b.z - a.z; const len = Math.hypot(dx, dz) || 1; dx /= len; dz /= len;
+    const nx = -dz, nz = dx, p = pts[i];
+    verts.push(p.x + nx * hw, p.y, p.z + nz * hw, p.x - nx * hw, p.y, p.z - nz * hw);
+  }
+  for (let i = 0; i < pts.length - 1; i++) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return new THREE.Mesh(g, new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.95, metalness: 0, side: THREE.DoubleSide }, opts || {})));
+}
+// clip OSM LineStrings (lon/lat) to the scene extent → runs of world points on terrain
+function osmRuns(category, nameRe, y0) {
+  const seed = state.data.osm, out = []; if (!seed || !seed.geojson) return out;
+  const EXT = 0.0042;
+  seed.geojson.features.filter(f => f.properties.category === category && (!nameRe || nameRe.test(f.properties.name || '')))
+    .forEach(f => {
+      let run = [];
+      (f.geometry.coordinates || []).forEach(([lon, lat]) => {
+        if (Math.abs(lat - state.center.lat) < EXT && Math.abs(lon - state.center.lon) < EXT) run.push(world(lat, lon, terrainHeight(lat, lon) + y0));
+        else { if (run.length > 1) out.push(run); run = []; }
+      });
+      if (run.length > 1) out.push(run);
+    });
+  return out;
+}
+function buildContext() {
+  state.osmUsed = { road: 0, rail: 0 };
+  const road = new THREE.Group(); state.groups.road = road; state.scene.add(road);
+  const railway = new THREE.Group(); state.groups.railway = railway; state.scene.add(railway);
+  const access = new THREE.Group(); state.groups.access = access; state.scene.add(access);
+  const setbacks = new THREE.Group(); state.groups.setbacks = setbacks; state.scene.add(setbacks);
+  state.ctx = {};
+
+  // ROAD — Troncal de Occidente (real OSM, ref 25) as dark asphalt; other roads thinner/context
+  const troncal = osmRuns('roads', /Troncal/i, 0.12);
+  troncal.forEach(run => { road.add(ribbon(run, 8, 0x22282d)); road.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(run.map(p => p.clone().setY(p.y + 0.05))), new THREE.LineDashedMaterial({ color: 0xe7b15a, dashSize: 3, gapSize: 4, transparent: true, opacity: 0.4 })).computeLineDistances()); state.osmUsed.road++; });
+  osmRuns('roads', /secondary|tertiary|^secondary$/i, 0.1).forEach(run => road.add(ribbon(run, 3.5, 0x2a3138, { opacity: 0.85, transparent: true })));
+  if (troncal[0]) state.ctx.road = troncal[0][Math.floor(troncal[0].length / 2)].clone();
+
+  // RAILWAY — Ferrocarril del Pacífico (real OSM): bed + two rails + sleepers (sober)
+  const rail = osmRuns('rail', /Ferrocarril|rail/i, 0.14);
+  rail.forEach(run => {
+    railway.add(ribbon(run, 2.4, 0x3a3f44)); state.osmUsed.rail++;
+    for (const s of [-0.7, 0.7]) {
+      const off = run.map((p, i) => { const a = run[Math.max(0, i - 1)], b = run[Math.min(run.length - 1, i + 1)]; let dx = b.x - a.x, dz = b.z - a.z; const l = Math.hypot(dx, dz) || 1; return p.clone().add(new THREE.Vector3(-dz / l * s, 0.18, dx / l * s)); });
+      railway.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(off), new THREE.LineBasicMaterial({ color: 0xb9c6d6, transparent: true, opacity: 0.7 })));
+    }
+    for (let i = 0; i < run.length - 1; i += 1) { // sleepers
+      const a = run[i], b = run[i + 1], steps = Math.max(1, Math.floor(a.distanceTo(b) / 5));
+      for (let s = 0; s < steps; s++) { const t = s / steps, p = a.clone().lerp(b, t);
+        let dx = b.x - a.x, dz = b.z - a.z; const l = Math.hypot(dx, dz) || 1;
+        const sl = new THREE.Mesh(new THREE.BoxGeometry(2, 0.14, 0.5), new THREE.MeshStandardMaterial({ color: 0x5a3f28 }));
+        sl.position.copy(p).setY(p.y + 0.08); sl.rotation.y = Math.atan2(dz, dx); railway.add(sl); }
+    }
+  });
+  if (rail[0]) state.ctx.rail = rail[0][Math.floor(rail[0].length / 2)].clone();
+
+  // SETBACKS / validation zone — rail setback band (from layout polygons) + explicit label
+  const rz = (state.data.polys && state.data.polys.restricted_zones) || [];
+  const railSet = rz.find(r => /rail|férreo|ferreo/i.test(r.id + ' ' + (r.label || '')));
+  if (railSet) {
+    const pts = railSet.polygon.map(p => world(p[0], p[1], terrainHeight(p[0], p[1]) + 0.18));
+    const shape = new THREE.Shape(pts.map(p => new THREE.Vector2(p.x, p.z)));
+    const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color: 0xe0795a, transparent: true, opacity: 0.16, side: THREE.DoubleSide }));
+    mesh.rotation.x = Math.PI / 2; mesh.position.y = terrainHeight(railSet.polygon[0][0], railSet.polygon[0][1]) + 0.18; setbacks.add(mesh);
+    const c = railSet.polygon.reduce((a, p) => [a[0] + p[0] / railSet.polygon.length, a[1] + p[1] / railSet.polygon.length], [0, 0]);
+    const lab = labelSprite('Validar retiro, servidumbre y permiso férreo', 0xf3c9bb);
+    lab.position.copy(world(c[0], c[1], terrainHeight(c[0], c[1]) + 9)); setbacks.add(lab);
+  }
+
+  // ACCESS — main access from the road to the frontage, with Logos signage
+  const fz = state.data.polys && state.data.polys.frontage_zone;
+  if (fz && state.ctx.road) {
+    const fc = fz.polygon.reduce((a, p) => [a[0] + p[0] / fz.polygon.length, a[1] + p[1] / fz.polygon.length], [0, 0]);
+    const fW = world(fc[0], fc[1], terrainHeight(fc[0], fc[1]) + 0.12);
+    access.add(ribbon([state.ctx.road.clone().setY(fW.y), fW], 5, 0x9c9279)); // gravel/permeable access
+    // signage post + Logos label at the road end
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.4, 5, 0.4), new THREE.MeshStandardMaterial({ color: 0x2b333b, metalness: 0.4 }));
+    const pPos = state.ctx.road.clone(); post.position.copy(pPos).setY(pPos.y + 2.5); access.add(post);
+    const sign = labelSprite('LOGOS PARADOR · acceso', 0xe7b15a); sign.position.copy(pPos).setY(pPos.y + 6); access.add(sign);
+    state.ctx.access = fW.clone();
+  }
+}
+
 // ---- camera anchors / decision views --------------------------------------
 function setupAnchors() {
   state.anchors = (state.data.zones && state.data.zones.camera_anchors) || [];
   const host = $('vCams'); if (!host) return;
-  const views = [['top', 'Top'], ...state.anchors.map(a => [a.id, a.label])];
+  const ctx = [['ctx-overall', 'Site Context'], ['ctx-arrival-road', 'Arrival (Road)'], ['ctx-railway-edge', 'Railway Edge'], ['ctx-top', 'Top Context']];
+  const views = [['top', 'Top'], ...state.anchors.map(a => [a.id, a.label]), ...ctx];
   host.innerHTML = views.map(([id, label]) => `<button class="vbtn" data-cam="${id}" type="button">${label}</button>`).join('');
   host.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => gotoView(b.dataset.cam)));
 }
@@ -299,6 +392,12 @@ function gotoView(id) {
   const note = $('vViewNote'); if (note) note.textContent = VIEW_NOTE[id] || '';
   const lotC = world(state.center.lat, state.center.lon, terrainHeight(state.center.lat, state.center.lon));
   if (id === 'top') { state.controls.set(lotC.clone().add(new THREE.Vector3(2, 240, 2)), lotC); return; }
+  // context views frame ROAD + LOT + RAIL together
+  const ctx = state.ctx || {};
+  if (id === 'ctx-top') { const c = ctx.rail ? lotC.clone().lerp(ctx.rail, 0.4) : lotC; state.controls.set(c.clone().add(new THREE.Vector3(4, 320, 4)), c); return; }
+  if (id === 'ctx-overall') { state.controls.set(lotC.clone().add(new THREE.Vector3(150, 150, 170)), lotC); return; }
+  if (id === 'ctx-arrival-road') { const t = ctx.access || lotC; const eye = (ctx.road || lotC).clone().add(new THREE.Vector3(30, 30, 40)); state.controls.set(eye, t); return; }
+  if (id === 'ctx-railway-edge') { const t = ctx.rail || lotC; const eye = t.clone().add(new THREE.Vector3(-60, 45, 40)); state.controls.set(eye, lotC.clone().lerp(t, 0.5)); return; }
   const a = state.anchors.find(x => x.id === id); if (!a) return;
   const subj = world(a.lat, a.lon, terrainHeight(a.lat, a.lon) + 2);     // frame the subject of the decision
   const off = VIEW_OFFSET[id] || [24, 22, 24];
@@ -310,6 +409,7 @@ function applyToggles() {
   const show = (k, id) => { const g = state.groups[k]; const c = $(id); if (g) g.visible = c ? c.checked : true; };
   show('terrain', 'vTerrain'); show('containers', 'vContainers'); show('trees', 'vTrees');
   show('zones', 'vZones'); show('labels', 'vLabels'); show('conflicts', 'vConflicts');
+  show('road', 'vRoad'); show('railway', 'vRailway'); show('access', 'vAccess'); show('setbacks', 'vSetbacks');
   const ph = { F1: $('vF1'), F2: $('vF2'), F3: $('vF3') };
   const phaseOn = (p) => { const c = ph[p]; return c ? c.checked : true; };
   if (state.groups.containers) state.groups.containers.children.forEach(o => { if (o.userData && o.userData.phase) o.visible = phaseOn(o.userData.phase); });
@@ -321,6 +421,13 @@ function applyToggles() {
 function exportScene() {
   const out = { schema: 'kairos.spatial-3d/v1', status: 'PRELIMINARY_CONCEPTUAL', exaggeration: state.exaggeration,
     buildingScale: state.buildingScale, center: state.center, containers: state.constraints, camera_anchors: state.anchors,
+    context: {
+      source: 'data/osm/osm-context-seed.json (real OSM) + data/calibration/layout-polygons.seed.json',
+      osmRunsUsed: state.osmUsed || { road: 0, rail: 0 },
+      road: 'Troncal de Occidente (OSM ref 25)', railway: 'Ferrocarril del Pacífico (OSM, 914mm)',
+      setbackValidation: 'Validar retiro, servidumbre y permiso férreo',
+      note: 'Contexto vial/férreo desde OSM georreferenciado; acceso/signage y banda de retiro son conceptuales. Contexto vial/férreo aproximado — validar con levantamiento y normativa.'
+    },
     disclaimer: 'Modelo 3D conceptual basado en elevación aproximada. No sustituye topografía, ingeniería, arquitectura ni validación legal/catastral.', conceptual_only: true };
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
   a.download = 'logos-parador-3d-scene.json'; a.click(); URL.revokeObjectURL(a.href);
@@ -336,12 +443,12 @@ async function boot() {
   if (!webglOK()) { $('vFallback').style.display = 'grid'; host.style.display = 'none'; return; }
 
   const get = (u) => fetch(DATA + u).then(r => r.ok ? r.json() : null).catch(() => null);
-  const [terrain, slope, zones, veg, mat, catalog, polys] = await Promise.all([
+  const [terrain, slope, zones, veg, mat, catalog, polys, osm] = await Promise.all([
     get('terrain/terrain-profile.json'), get('terrain/slope-zones.json'), get('spatial/spatial-zones.json'),
     get('spatial/vegetation-strategy.json'), get('spatial/material-strategy.json'),
-    get('layout/container-layout.json'), get('calibration/layout-polygons.seed.json')
+    get('layout/container-layout.json'), get('calibration/layout-polygons.seed.json'), get('osm/osm-context-seed.json')
   ]);
-  state.data = { terrain, slope, zones, veg, mat, catalog, polys };
+  state.data = { terrain, slope, zones, veg, mat, catalog, polys, osm };
   if (!terrain || !zones) { $('vFallback').style.display = 'grid'; $('vFallback').querySelector('p').textContent = 'No se pudo cargar la data espacial (requiere el build externo).'; host.style.display = 'none'; return; }
 
   state.scene = new THREE.Scene();
@@ -362,13 +469,13 @@ async function boot() {
   sun.shadow.camera.left = -160; sun.shadow.camera.right = 160; sun.shadow.camera.top = 160; sun.shadow.camera.bottom = -160;
   state.scene.add(sun); state.scene.add(new THREE.AmbientLight(0x16545a, 0.42));
 
-  buildTerrain(); buildContainers(); buildTrees(); buildZones(); setupAnchors();
+  buildTerrain(); buildContainers(); buildTrees(); buildZones(); buildContext(); setupAnchors();
 
   const target = world(state.center.lat, state.center.lon, terrainHeight(state.center.lat, state.center.lon));
   state.controls = makeControls(state.camera, state.renderer.domElement, target);
   state.controls.radius = 100; state.controls.theta = Math.PI * 0.82; state.controls.phi = Math.PI * 0.40; state.controls.apply();
 
-  ['vTerrain', 'vContainers', 'vTrees', 'vZones', 'vLabels', 'vConflicts', 'vF1', 'vF2', 'vF3'].forEach(id => { const c = $(id); if (c) c.addEventListener('change', applyToggles); });
+  ['vTerrain', 'vContainers', 'vTrees', 'vZones', 'vLabels', 'vConflicts', 'vRoad', 'vRailway', 'vAccess', 'vSetbacks', 'vF1', 'vF2', 'vF3'].forEach(id => { const c = $(id); if (c) c.addEventListener('change', applyToggles); });
   document.querySelectorAll('[data-exag]').forEach(b => b.addEventListener('click', () => setExag(+b.getAttribute('data-exag'))));
   $('vReset') && $('vReset').addEventListener('click', () => gotoView('top'));
   $('vExportScene') && $('vExportScene').addEventListener('click', exportScene);
@@ -378,7 +485,7 @@ async function boot() {
   if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
 
   setExag(state.exaggeration); applyToggles(); render();
-  if ($('vStatus2')) $('vStatus2').textContent = `Three.js r${THREE.REVISION} (local) · terreno ${terrain.points.length} pts · ${zones.containers.length} volúmenes · escala conceptual`;
+  if ($('vStatus2')) $('vStatus2').textContent = `Three.js r${THREE.REVISION} (local) · terreno ${terrain.points.length} pts · ${zones.containers.length} volúmenes · contexto OSM (vía ${(state.osmUsed || {}).road || 0} · riel ${(state.osmUsed || {}).rail || 0})`;
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
