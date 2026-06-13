@@ -52,9 +52,28 @@ const required = [
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
-// redirect entry pages → expected targets
+// public landing (commercial entry) — root index.html
+const landingPath = join(BASE, 'index.html');
+if (!existsSync(landingPath)) { fail('missing public landing: index.html'); }
+else {
+  const L = readFileSync(landingPath, 'utf8');
+  /http-equiv=["']refresh/i.test(L) ? fail('public landing index.html is a redirect, expected the commercial landing') : ok('public landing present (not a redirect)');
+  /logos\s*parador/i.test(L) ? ok('landing hero: "Logos Parador"') : fail('landing missing hero "Logos Parador"');
+  // 3 CTAs (relative)
+  const ctas = [['Ver Masterplan', './masterplan/'], ['Iniciar Journey', './journey/'], ['Ver Mapa', './map/']];
+  ctas.forEach(([label, href]) => {
+    (L.includes(`href="${href}"`) && L.includes(label)) ? ok(`landing CTA: ${label} → ${href}`) : fail(`landing CTA missing: ${label} (${href})`);
+  });
+  // discrete disclaimer
+  /no sustituye levantamiento|conceptual preliminar/i.test(L) ? ok('landing disclaimer present') : fail('landing disclaimer missing');
+  // each CTA route resolves to an existing entry page
+  [['./masterplan/', 'masterplan/index.html'], ['./journey/', 'journey/index.html'], ['./map/', 'map/index.html']].forEach(([href, file]) => {
+    existsSync(join(BASE, file)) ? ok(`landing route resolves: ${href}`) : fail(`landing route broken: ${href} (missing ${file})`);
+  });
+}
+
+// internal redirect entry pages → expected targets
 const redirects = {
-  'index.html': 'web/',
   'masterplan/index.html': '../geometry-engine/masterplan/',
   'map/index.html': '../geometry-engine/map-calibration/',
   'journey/index.html': '../geometry-engine/masterplan/?journey=1&auto=1'

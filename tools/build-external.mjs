@@ -48,7 +48,9 @@ const redirect = (to, title) =>
   `<p>Redirigiendo a <a style="color:#8fe5ff" href="${to}">${title}</a>…</p></body></html>\n`;
 const routePage = (sub, to, title) => { mkdirSync(join(OUT, sub), { recursive: true }); writeFileSync(join(OUT, sub, 'index.html'), redirect(to, title)); };
 
-writeFileSync(join(OUT, 'index.html'), redirect('web/', 'Logos Parador — Landing'));
+// Public landing (commercial entry) — committed source, copied as the root index.
+// Its CTAs point at the internal redirect routes below (./masterplan/ ./journey/ ./map/).
+cpSync(join(ROOT, 'external', 'landing', 'logos-parador', 'index.html'), join(OUT, 'index.html'));
 routePage('masterplan', '../geometry-engine/masterplan/', 'Masterplan Blueprint V3.1');
 routePage('map', '../geometry-engine/map-calibration/', 'Map Calibration + OSM Context');
 routePage('journey', '../geometry-engine/masterplan/?journey=1&auto=1', 'Visitor Journey (cinematic)');
