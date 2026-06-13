@@ -284,6 +284,13 @@ if (existsSync(mcPath)) {
   (/id=["']wsPalette["']/.test(W) && /id=["']wsProps["']/.test(W)) ? ok('workspace: element palette + properties panel') : fail('workspace: missing element/properties UI');
   (/id=["']wsExportWorkspace["']/.test(W) && /id=["']wsImport["']/.test(W)) ? ok('workspace: export + import controls') : fail('workspace: missing export/import');
   /fuente editable principal/i.test(Wn) && /presentaci[oó]n planim[eé]trica secundaria/i.test(Wn) && /visualizaci[oó]n derivada/i.test(Wn) ? ok('workspace: roles (editable core · planimetric secondary · derived 3D)') : fail('workspace: missing source-of-truth roles text');
+  /id=["']wsExport3D["']/.test(W) && /Export Workspace for 3D/i.test(W) ? ok('workspace: "Export Workspace for 3D" button') : fail('workspace: missing Export-for-3D button');
+  /alimenta la vista 3D|c[aá]rgalo en 3D/i.test(Wn) ? ok('workspace: export→3D explanation text') : fail('workspace: missing export→3D explanation');
+}
+const wsPathExp = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
+if (existsSync(wsPathExp)) {
+  const WJ2 = readFileSync(wsPathExp, 'utf8');
+  (/coordinate_system: ['"]WGS84 EPSG:4326['"]/.test(WJ2) && /generated_at/.test(WJ2) && /source: ['"]map-calibration['"]/.test(WJ2) && /validation_summary/.test(WJ2)) ? ok('workspace.js: spatial-workspace export schema (generated_at/CRS/source/summary)') : fail('workspace.js: incomplete spatial-workspace schema');
 }
 const wsPath = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPath)) {
@@ -397,6 +404,11 @@ if (existsSync(appPath)) {
   /osm\/osm-context-seed\.json/.test(A) ? ok('3d-view app: loads OSM road/rail context (real geometry)') : fail('3d-view app: does not load OSM context');
   (/buildContext/.test(A) && /category === ['"]rail['"]|category === ['"]roads['"]|'roads'|'rail'/.test(A)) ? ok('3d-view app: builds road + railway site context') : fail('3d-view app: missing road/railway context build');
   (/ctx-overall/.test(A) && /ctx-railway-edge/.test(A) && /ctx-arrival-road/.test(A) && /ctx-top/.test(A)) ? ok('3d-view app: context cameras (road+lot+rail)') : fail('3d-view app: missing context cameras');
+  // workspace import (FASE 2/3)
+  (/function importWorkspace/.test(A) && /spatial-workspace/.test(A)) ? ok('3d-view app: imports + validates spatial-workspace schema') : fail('3d-view app: missing workspace import/validation');
+  (/container-20/.test(A) && /6\.06/.test(A) && /12\.19/.test(A)) ? ok('3d-view app: element mapping (container 6.06/12.19m etc.)') : fail('3d-view app: missing element mapping');
+  /Using default conceptual layout/.test(A) ? ok('3d-view app: default fallback when no import') : fail('3d-view app: missing default fallback');
+  /layout_source/.test(A) ? ok('3d-view app: scene export marks imported vs default') : fail('3d-view app: scene export missing source flag');
   !/lot\.json/.test(A) ? ok('3d-view app: does not touch lot.json') : fail('3d-view app: references lot.json');
 }
 // cross-navigation: every public page links to /3d-view/ (and the new page links back)

@@ -89,6 +89,15 @@
 
     <div class="v-panel" aria-label="Controles 3D">
       <div class="grp">
+        <h4>Origen del layout</h4>
+        <div class="v-actrow">
+          <label class="act" for="vImport" style="cursor:pointer">Import Workspace JSON<input type="file" id="vImport" accept="application/json,.json" hidden></label>
+        </div>
+        <p class="v-status" id="vSource">Using default conceptual layout</p>
+        <p class="v-status"><b>Esta vista es derivada. La edición se hace en Map Calibration.</b>
+          Exporta el <code>spatial-workspace.json</code> e impórtalo aquí.</p>
+      </div>
+      <div class="grp">
         <h4>Capas</h4>
         <label><input type="checkbox" id="vTerrain" checked> Terreno (elevación aprox.)</label>
         <label><input type="checkbox" id="vContainers" checked> Contenedores / volúmenes</label>

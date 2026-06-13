@@ -196,20 +196,31 @@
   function notesDoc() { return { schema: 'kairos.notes/v1', status: 'PRELIMINARY_CONCEPTUAL', notes: state.notes, disclaimer: DISC }; }
   function constraintDoc() { const items = state.elements.map(e => { const v = validate(e); return { id: e.id, type: e.type, validation: v.status, flags: v.flags }; });
     const s = { ok: 0, warning: 0, conflict: 0 }; items.forEach(i => s[i.validation]++); return { schema: 'kairos.constraint-report/v1', status: 'PRELIMINARY_CONCEPTUAL', summary: s, items, disclaimer: DISC }; }
+  function nowISO() { try { return new Date().toISOString(); } catch (e) { return 'unknown'; } }
   function workspaceDoc() {
-    return { schema: 'kairos.spatial-workspace/v1', status: 'PRELIMINARY_CONCEPTUAL',
+    const cr = constraintDoc();
+    return {
+      schema: 'kairos.spatial-workspace/v1',
+      generated_at: nowISO(),
+      coordinate_system: 'WGS84 EPSG:4326',
+      source: 'map-calibration',
+      status: 'PRELIMINARY_CONCEPTUAL',
       role: 'Map Calibration = Spatial Source of Truth (núcleo editable). layout-map = presentación planimétrica secundaria. 3D = visualización derivada.',
       center: (window.MapCalibration && window.MapCalibration.getCentroid && window.MapCalibration.getCentroid()) || null,
-      polygons: polys(), elements: elementsDoc().elements, notes: state.notes, constraints: constraintDoc(),
+      polygons: polys(),
+      elements: elementsDoc().elements,
+      notes: state.notes,
+      constraints: cr,
+      terrain_reference: 'data/terrain/terrain-profile.json',
+      camera_anchors: state.anchors,
+      validation_summary: cr.summary,
       three_d_prep: {
-        note: 'Preparado para que el 3D lo lea en fase siguiente (NO se rehace el 3D aquí).',
+        note: 'El 3D reconstruye la volumetría conceptual desde elements[] (type/dimensions/rotation/phase/notes/validation).',
         element_volumes: state.elements.map(e => { const t = TYPES[e.type] || {}; return { id: e.id, type: e.type, volume: { w: e.w || t.w, d: e.d || t.d, h: t.h }, rotation: e.rotation || 0, lat: e.lat, lon: e.lon }; }),
-        terrain_reference: 'data/terrain/terrain-profile.json',
-        camera_anchors: state.anchors,
-        conflict_flags: state.elements.filter(e => e._status !== 'ok').map(e => ({ id: e.id, status: e._status })),
         polygon_references: Object.keys(polys())
       },
-      disclaimer: DISC };
+      disclaimer: DISC
+    };
   }
   function importJson(file) {
     const fr = new FileReader();
@@ -231,7 +242,9 @@
   }
   function bind() {
     document.querySelectorAll('[data-ws-mode]').forEach(b => b.addEventListener('click', () => setMode(b.getAttribute('data-ws-mode'))));
-    $('wsExportWorkspace') && $('wsExportWorkspace').addEventListener('click', () => dl(workspaceDoc(), 'logos-parador-spatial-workspace.json'));
+    const exportWS = () => dl(workspaceDoc(), 'logos-parador-spatial-workspace.json');
+    $('wsExportWorkspace') && $('wsExportWorkspace').addEventListener('click', exportWS);
+    $('wsExport3D') && $('wsExport3D').addEventListener('click', exportWS);
     $('wsExportPolygons') && $('wsExportPolygons').addEventListener('click', () => dl(Object.assign({ schema: 'kairos.layout-polygons/v1', status: 'PRELIMINARY_CONCEPTUAL' }, polys(), { disclaimer: DISC }), 'logos-parador-polygons.json'));
     $('wsExportElements') && $('wsExportElements').addEventListener('click', () => dl(elementsDoc(), 'logos-parador-elements.json'));
     $('wsExportConstraints') && $('wsExportConstraints').addEventListener('click', () => dl(constraintDoc(), 'logos-parador-constraint-report.json'));

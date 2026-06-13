@@ -160,8 +160,8 @@ function setExag(v) {
   t.points.forEach(p => { map[`${p.r}_${p.c}`] = vi++; });
   t.points.forEach(p => { const y = (p.elev - min) * v; p._y = y; pos.setY(map[`${p.r}_${p.c}`], y); });
   pos.needsUpdate = true; mesh.geometry.computeVertexNormals();
-  ['containers', 'trees', 'zones', 'labels', 'conflicts', 'road', 'railway', 'access', 'setbacks'].forEach(k => { if (state.groups[k]) state.scene.remove(state.groups[k]); });
-  buildContainers(); buildTrees(); buildZones(); buildContext(); updateElevLegend(); applyToggles(); render();
+  ['containers', 'trees', 'zones', 'labels', 'conflicts', 'road', 'railway', 'access', 'setbacks', 'imported'].forEach(k => { if (state.groups[k]) state.scene.remove(state.groups[k]); });
+  buildContainers(); buildTrees(); buildZones(); buildContext(); if (state.imported) buildImportedElements(); updateElevLegend(); applyToggles(); render();
 }
 
 // ---- architectural containers ---------------------------------------------
@@ -404,23 +404,135 @@ function gotoView(id) {
   state.controls.set(subj.clone().add(new THREE.Vector3(off[0], off[1], off[2])), subj);
 }
 
+// ---- import a spatial-workspace.json from Map Calibration (FASE 2/3) ------
+// element type → conceptual 3D volume (real container dims where applicable)
+const IMPORT_MAP = {
+  'container-20': { w: 6.06, d: 2.44, h: 2.6, color: 0xe7b15a, kind: 'box' },
+  'container-40': { w: 12.19, d: 2.44, h: 2.6, color: 0xe7b15a, kind: 'box' },
+  'kitchen': { w: 6, d: 3, h: 2.8, color: 0xe8a25c, kind: 'box' },
+  'bath': { w: 4, d: 3, h: 2.8, color: 0x9fb0b8, kind: 'box' },
+  'bar': { w: 6, d: 2.44, h: 2.6, color: 0x8fe5ff, kind: 'box' },
+  'deck': { w: 6, d: 6, h: 0.4, color: 0x67c994, kind: 'platform' },
+  'pergola': { w: 5, d: 5, h: 2.8, color: 0xb07a4a, kind: 'canopy' },
+  'sign': { w: 1.5, d: 1.5, h: 4, color: 0xefa827, kind: 'landmark' },
+  'tree-preserve': { color: 0x3f8f63, kind: 'tree', action: 'preserve' },
+  'tree-evaluate': { color: 0xe7b15a, kind: 'tree', action: 'evaluate' },
+  'tree-remove': { color: 0xe0795a, kind: 'tree', action: 'remove' },
+  'service-point': { w: 2, d: 2, h: 2.4, color: 0x94b8b2, kind: 'marker' },
+  'parking-bay': { w: 5, d: 2.5, h: 0.1, color: 0x9fd0ff, kind: 'parking' }
+};
+function setSource(text, kind) {
+  const el = $('vSource'); if (!el) return; el.textContent = text;
+  el.style.color = kind === 'error' ? '#f3c9bb' : kind === 'imported' ? '#bdeed3' : '#9cc6dd';
+}
+function buildImportedElements() {
+  if (state.groups.imported) state.scene.remove(state.groups.imported);
+  const g = new THREE.Group(); state.groups.imported = g; state.scene.add(g);
+  const labels = state.groups.labels || (state.groups.labels = new THREE.Group());
+  const els = (state.imported && state.imported.elements) || [];
+  state.importedFlags = [];
+  els.forEach(e => {
+    if (typeof e.lat !== 'number' || typeof e.lon !== 'number') return;
+    const m = IMPORT_MAP[e.type] || { w: 4, d: 4, h: 3, color: 0xcfe, kind: 'box' };
+    const dim = e.dimensions || {};
+    const w = /^container-/.test(e.type) ? m.w : (dim.w || m.w || 4);
+    const d = /^container-/.test(e.type) ? m.d : (dim.d || m.d || 4);
+    const h = m.h || dim.h || 3;
+    const baseY = terrainHeight(e.lat, e.lon);
+    const conflict = e.validation === 'conflict', warn = e.validation === 'warning';
+    const edge = conflict ? 0xe0795a : warn ? 0xe7b15a : 0xeaf6ff;
+    const node = new THREE.Group(); node.position.copy(world(e.lat, e.lon, baseY)); node.rotation.y = -(e.rotation || 0) * Math.PI / 180;
+
+    if (m.kind === 'tree') {
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 3, 5), new THREE.MeshStandardMaterial({ color: 0x5a3f28 }));
+      trunk.position.y = 1.5; node.add(trunk);
+      const crown = m.action === 'preserve'
+        ? new THREE.Mesh(new THREE.SphereGeometry(3.2, 8, 6), new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.95, transparent: true, opacity: 0.92 }))
+        : new THREE.Mesh(new THREE.ConeGeometry(2, 4.4, 6), new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.9, transparent: true, opacity: m.action === 'remove' ? 0.55 : 0.85 }));
+      crown.position.y = 5; node.add(crown);
+    } else {
+      // base slab
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 1.2, 0.35, d + 1.2), new THREE.MeshStandardMaterial({ color: 0x8b9296, roughness: 0.9 })); slab.position.y = 0.18; slab.receiveShadow = true; node.add(slab);
+      if (m.kind === 'parking') { /* flat footprint only */ }
+      else if (m.kind === 'landmark') {
+        const pole = new THREE.Mesh(new THREE.BoxGeometry(0.4, h, 0.4), new THREE.MeshStandardMaterial({ color: 0x2b333b, metalness: 0.4 })); pole.position.y = 0.35 + h / 2; node.add(pole);
+        const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1, 0.3), new THREE.MeshStandardMaterial({ color: m.color, emissive: m.color, emissiveIntensity: 0.1 })); top.position.y = 0.35 + h; node.add(top);
+      } else {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: m.kind === 'canopy' ? m.color : 0x2b333b, roughness: 0.5, metalness: m.kind === 'canopy' ? 0.1 : 0.55, transparent: m.kind === 'canopy', opacity: m.kind === 'canopy' ? 0.55 : 1 }));
+        body.position.y = 0.35 + h / 2; body.castShadow = true; node.add(body);
+        body.add(new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry), new THREE.LineBasicMaterial({ color: edge, transparent: true, opacity: 0.7 })));
+        if (m.kind !== 'platform' && m.kind !== 'marker') { // roof accent (use identity colour)
+          const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.8, 0.28, d + 0.8), new THREE.MeshStandardMaterial({ color: m.color, roughness: 0.6 })); roof.position.y = 0.35 + h + 0.14; node.add(roof);
+        }
+      }
+      if (conflict) { // conflict = tension ring (not a bug)
+        const ring = new THREE.Mesh(new THREE.RingGeometry(Math.max(w, d) * 0.75, Math.max(w, d) * 0.95, 24), new THREE.MeshBasicMaterial({ color: 0xe0795a, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+        ring.rotation.x = -Math.PI / 2; ring.position.copy(world(e.lat, e.lon, baseY + 0.4)); g.add(ring);
+      }
+    }
+    g.add(node);
+    const note = e.note ? ' · ' + e.note : '';
+    const lab = labelSprite(`${IMPORT_MAP[e.type] ? e.type : e.type}${e.phase ? ' · ' + e.phase : ''}${note}`, m.color);
+    lab.position.copy(world(e.lat, e.lon, baseY + (m.kind === 'tree' ? 8 : (h + 3)))); lab.userData = { imported: true };
+    labels.add(lab);
+  });
+  refreshSourceVisibility();
+}
+// when a workspace is imported, the default conceptual containers hide; imported shows
+function refreshSourceVisibility() {
+  const on = $('vContainers') ? $('vContainers').checked : true;
+  if (state.imported) { // imported workspace replaces the default conceptual containers + their conflicts
+    if (state.groups.containers) state.groups.containers.visible = false;
+    if (state.groups.conflicts) state.groups.conflicts.visible = false;
+    if (state.groups.imported) state.groups.imported.visible = on;
+  } else {
+    if (state.groups.containers) state.groups.containers.visible = on;
+    if (state.groups.imported) state.groups.imported.visible = false;
+  }
+}
+function importWorkspace(file) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const doc = JSON.parse(fr.result);
+      if (!doc || !/^kairos\.spatial-workspace\//.test(doc.schema || '')) throw new Error('schema no es kairos.spatial-workspace');
+      if (!Array.isArray(doc.elements)) throw new Error('falta elements[]');
+      state.imported = doc; buildImportedElements(); applyToggles(); render();
+      const n = doc.elements.length, s = (doc.validation_summary || {});
+      setSource(`Using imported workspace · ${n} elementos${s.conflict ? ' · ' + s.conflict + ' conflicto' : ''}`, 'imported');
+    } catch (err) {
+      setSource('Import inválido: ' + err.message + ' — se mantiene el layout conceptual por defecto.', 'error');
+    }
+  };
+  fr.onerror = () => setSource('No se pudo leer el archivo — layout conceptual por defecto.', 'error');
+  fr.readAsText(file);
+}
+
 // ---- toggles --------------------------------------------------------------
 function applyToggles() {
   const show = (k, id) => { const g = state.groups[k]; const c = $(id); if (g) g.visible = c ? c.checked : true; };
-  show('terrain', 'vTerrain'); show('containers', 'vContainers'); show('trees', 'vTrees');
+  show('terrain', 'vTerrain'); show('trees', 'vTrees');
   show('zones', 'vZones'); show('labels', 'vLabels'); show('conflicts', 'vConflicts');
   show('road', 'vRoad'); show('railway', 'vRailway'); show('access', 'vAccess'); show('setbacks', 'vSetbacks');
+  refreshSourceVisibility();   // vContainers toggles default OR imported group
   const ph = { F1: $('vF1'), F2: $('vF2'), F3: $('vF3') };
   const phaseOn = (p) => { const c = ph[p]; return c ? c.checked : true; };
-  if (state.groups.containers) state.groups.containers.children.forEach(o => { if (o.userData && o.userData.phase) o.visible = phaseOn(o.userData.phase); });
-  if (state.groups.labels) state.groups.labels.children.forEach(o => { if (o.userData && o.userData.phase) o.visible = (!$('vLabels') || $('vLabels').checked) && phaseOn(o.userData.phase); });
+  if (state.groups.containers && state.groups.containers.visible) state.groups.containers.children.forEach(o => { if (o.userData && o.userData.phase) o.visible = phaseOn(o.userData.phase); });
+  const labelsOn = !$('vLabels') || $('vLabels').checked;
+  if (state.groups.labels) state.groups.labels.children.forEach(o => {
+    const isImp = !!(o.userData && o.userData.imported), belongs = state.imported ? isImp : !isImp;
+    o.visible = labelsOn && belongs && (!(o.userData && o.userData.phase) || phaseOn(o.userData.phase));
+  });
   render();
 }
 
 // ---- exports --------------------------------------------------------------
 function exportScene() {
   const out = { schema: 'kairos.spatial-3d/v1', status: 'PRELIMINARY_CONCEPTUAL', exaggeration: state.exaggeration,
-    buildingScale: state.buildingScale, center: state.center, containers: state.constraints, camera_anchors: state.anchors,
+    buildingScale: state.buildingScale, center: state.center,
+    layout_source: state.imported ? 'imported-workspace' : 'default-conceptual',
+    imported_workspace: state.imported ? { generated_at: state.imported.generated_at, elements: (state.imported.elements || []).length, source: state.imported.source } : null,
+    containers: state.imported ? (state.imported.elements || []) : state.constraints, camera_anchors: state.anchors,
     context: {
       source: 'data/osm/osm-context-seed.json (real OSM) + data/calibration/layout-polygons.seed.json',
       osmRunsUsed: state.osmUsed || { road: 0, rail: 0 },
@@ -480,6 +592,8 @@ async function boot() {
   $('vReset') && $('vReset').addEventListener('click', () => gotoView('top'));
   $('vExportScene') && $('vExportScene').addEventListener('click', exportScene);
   $('vExportPng') && $('vExportPng').addEventListener('click', exportPng);
+  $('vImport') && $('vImport').addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) importWorkspace(e.target.files[0]); });
+  setSource('Using default conceptual layout', 'default');
   const resize = () => { if (!state.renderer) return; const { w, h } = sz(); state.camera.aspect = w / h; state.camera.updateProjectionMatrix(); state.renderer.setSize(w, h, false); render(); };
   window.addEventListener('resize', resize);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(host);
