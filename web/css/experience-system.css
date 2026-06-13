@@ -1,0 +1,206 @@
+/* ============================================================================
+   KAIROS PARADOR — Experience System V1 / experience-system.css
+   Shared PUBLIC design layer for the Logos Parador ecosystem (landing,
+   technical roadmap, future public pages). Self-contained, offline-friendly,
+   system fonts only, no deps, no analytics.
+
+   ⚠️ This file is NEW and PUBLIC-only. It does NOT replace web/css/lab.css
+   (which is shared with the internal Lab and must stay untouched).
+   ============================================================================ */
+
+:root{
+  /* --- palette (hospitality tropical · aligned with the public landing) --- */
+  --night:#06141d; --deep:#0a2b34; --teal:#0e3b44; --teal-2:#17565c;
+  --ink:#f5fcff; --muted:#c4e2db; --soft:#94b8b2;
+  --gold:#e7b15a; --gold-2:#d8954a; --green:#5fc08a; --rail:#e8a25c; --line:#8fe5ff;
+  --risk-low:#5fc08a; --risk-med:#e7b15a; --risk-high:#e0795a;
+
+  /* --- material palette (architectural surfaces) --- */
+  --mat-wood:#b07a4a; --mat-stone:#9fb0b8; --mat-canopy:#3f8f63; --mat-water:#5aa0d6; --mat-clay:#b0553c;
+
+  /* --- surfaces / borders --- */
+  --surface:rgba(255,255,255,.045); --surface-2:rgba(255,255,255,.075);
+  --border:rgba(143,229,255,.14); --border-gold:rgba(231,177,90,.32);
+  --glass:rgba(3,16,29,.86);
+
+  /* --- type --- */
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* --- spacing scale --- */
+  --sp-1:6px; --sp-2:12px; --sp-3:20px; --sp-4:30px; --sp-5:48px; --sp-6:76px;
+  /* --- radius --- */
+  --r-sm:12px; --r-md:18px; --r-lg:24px; --r-xl:30px; --r-pill:999px;
+  --shadow:0 18px 50px rgba(0,0,0,.42);
+}
+
+/* ---------------------------------------------------------------- base ---- */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body.xp{margin:0;color:var(--ink);font-family:var(--sans);line-height:1.6;
+  background:
+    radial-gradient(125% 90% at 82% -12%, var(--teal-2) 0, var(--deep) 40%, var(--night) 74%),
+    var(--night);
+  animation:xp-fade .5s ease both}
+@keyframes xp-fade{from{opacity:0}to{opacity:1}}
+.xp a{color:inherit;text-decoration:none}
+.xp .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+.xp .eyebrow{font:600 12px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin:0}
+
+/* --- tropical landscape rule: a layered horizon band used as section dividers - */
+.xp .landscape-rule{height:3px;border:0;margin:0;
+  background:linear-gradient(90deg,var(--mat-canopy),var(--green) 30%,var(--gold) 60%,var(--rail) 100%);
+  opacity:.5;border-radius:var(--r-pill)}
+
+/* ------------------------------------------------------------- public nav -- */
+.xp .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:12px 28px;background:rgba(6,20,29,.72);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.xp .topbar .brand{display:flex;align-items:center;gap:11px;font:700 14px var(--sans);letter-spacing:.04em;color:var(--ink)}
+.xp .brandlogo{height:40px;width:auto;display:block;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.xp .topbar nav{display:flex;gap:4px;flex-wrap:wrap}
+.xp .topbar nav a{padding:8px 13px;border-radius:var(--r-pill);font:600 12px var(--sans);color:var(--muted);transition:color .15s,background .15s}
+.xp .topbar nav a:hover,.xp .topbar nav a[aria-current]{color:#fff;background:rgba(231,177,90,.16)}
+.xp .pbanner{padding:7px 28px;text-align:center;font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;
+  color:#cdb98a;background:rgba(231,177,90,.07);border-bottom:1px solid rgba(231,177,90,.13)}
+
+/* ------------------------------------------- prominent conceptual disclaimer */
+.xp .disc{position:sticky;top:60px;z-index:40;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(90deg,rgba(176,85,60,.92),rgba(176,85,60,.76));
+  color:#fff;padding:9px 24px;text-align:center;font:600 11.5px var(--mono);letter-spacing:.03em}
+.xp .disc::before{content:"⚠";opacity:.85}
+.xp .disc b{color:#ffe7d6}
+
+/* -------------------------------------------------------------------- hero -- */
+.xp .hero{padding:56px 28px 22px;max-width:1120px;margin:0 auto}
+.xp .hero h1{font-size:clamp(34px,6vw,66px);line-height:.98;letter-spacing:-.025em;margin:12px 0 12px;font-weight:800}
+.xp .hero .lede{font-size:clamp(16px,2vw,21px);color:var(--muted);max-width:780px}
+.xp .hero .lede b{color:var(--ink)}
+.xp .kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 14px;border-radius:var(--r-pill);
+  border:1px solid var(--border-gold);background:rgba(231,177,90,.08);font:600 11px var(--mono);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:18px}
+.xp .kicker .pin{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+
+/* --------------------------------------------------- architectural sections */
+.xp section.arch{padding:var(--sp-6) 0;border-top:1px solid var(--border)}
+.xp section.arch:first-of-type{border-top:0}
+.xp h2{font-size:clamp(26px,3.4vw,40px);line-height:1.04;letter-spacing:-.02em;margin:12px 0 8px;font-weight:800}
+.xp .secsub{color:var(--soft);max-width:620px;margin:0 0 var(--sp-5);font-size:16px}
+
+/* architectural panel (premium framed container, like a drawing sheet) */
+.xp .arch-panel{background:linear-gradient(180deg,rgba(23,86,92,.16),rgba(6,20,29,.42));
+  border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--sp-4);position:relative;overflow:hidden}
+.xp .arch-panel::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(143,229,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(143,229,255,.05) 1px,transparent 1px);
+  background-size:34px 34px;opacity:.5;mask-image:linear-gradient(180deg,#000,transparent 70%)}
+
+/* --------------------------------------------------- premium diagram cards -- */
+.xp .grid{display:grid;gap:18px}
+.xp .g2{grid-template-columns:repeat(2,1fr)}
+.xp .g3{grid-template-columns:repeat(3,1fr)}
+.xp .g4{grid-template-columns:repeat(4,1fr)}
+.xp .diagram-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;
+  transition:transform .18s,border-color .18s,background .18s;position:relative}
+.xp .diagram-card:hover{transform:translateY(-3px);border-color:var(--border-gold);background:var(--surface-2)}
+.xp .diagram-card .ic{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:14px;font-size:22px;
+  background:rgba(231,177,90,.12);border:1px solid var(--border-gold);margin-bottom:14px}
+.xp .diagram-card h3{margin:0 0 7px;font-size:17px;font-weight:700}
+.xp .diagram-card p{margin:0;color:var(--soft);font-size:14px;line-height:1.55}
+
+/* ----------------------------------------------------------- technical timeline */
+.xp .timeline{position:relative;margin:0;padding:0 0 0 26px;list-style:none}
+.xp .timeline::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(180deg,var(--gold),var(--green))}
+.xp .timeline > li{position:relative;margin:0 0 var(--sp-4)}
+.xp .timeline > li::before{content:"";position:absolute;left:-26px;top:6px;width:16px;height:16px;border-radius:50%;
+  background:var(--night);border:3px solid var(--gold);box-shadow:0 0 0 4px rgba(6,20,29,.9)}
+.xp .timeline .step-no{font:700 11px var(--mono);letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.xp .timeline h3{margin:4px 0 0;font-size:20px;font-weight:800;letter-spacing:-.01em}
+
+/* phase block (Diseño / Técnica / Riesgo / Próximo paso) */
+.xp .phase-card{background:linear-gradient(180deg,rgba(231,177,90,.07),rgba(255,255,255,.025));
+  border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-top:14px}
+.xp .phase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px}
+.xp .quad{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px}
+.xp .quad .lbl{display:flex;align-items:center;gap:7px;font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.xp .quad .lbl .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.xp .quad.design .lbl .dot{background:var(--green)}
+.xp .quad.tech .lbl .dot{background:var(--line)}
+.xp .quad.risk .lbl .dot{background:var(--rail)}
+.xp .quad.next .lbl .dot{background:var(--gold)}
+.xp .quad p,.xp .quad ul{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+.xp .quad ul{padding-left:16px}
+.xp .quad li{margin:3px 0}
+
+/* ----------------------------------------------------------- technical callouts */
+.xp .callout{display:flex;gap:12px;align-items:flex-start;background:rgba(143,229,255,.06);
+  border:1px solid var(--border);border-left:3px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin:14px 0}
+.xp .callout.warn{background:rgba(176,85,60,.12);border-left-color:var(--mat-clay)}
+.xp .callout .ico{font-size:18px;line-height:1.3}
+.xp .callout p{margin:0;font-size:13.5px;color:var(--muted)}
+.xp .callout b{color:var(--ink)}
+
+/* ----------------------------------------------------------- risk + study chips */
+.xp .chip{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:var(--r-pill);
+  font:600 11px var(--mono);letter-spacing:.04em;border:1px solid var(--border)}
+.xp .chip .dot{width:8px;height:8px;border-radius:50%}
+.xp .chip.risk-low{color:#cdeed9;border-color:rgba(95,192,138,.4)}
+.xp .chip.risk-low .dot{background:var(--risk-low)}
+.xp .chip.risk-med{color:#f1ddb6;border-color:rgba(231,177,90,.4)}
+.xp .chip.risk-med .dot{background:var(--risk-med)}
+.xp .chip.risk-high{color:#f3c9bb;border-color:rgba(224,121,90,.45)}
+.xp .chip.risk-high .dot{background:var(--risk-high)}
+.xp .chip.study{color:var(--muted)}
+.xp .chip.study .dot{background:var(--mat-stone)}
+.xp .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+
+/* checklist (technical actions) */
+.xp .checklist{list-style:none;margin:8px 0 0;padding:0}
+.xp .checklist li{position:relative;padding:6px 0 6px 26px;color:var(--muted);font-size:14px;border-bottom:1px solid rgba(143,229,255,.08)}
+.xp .checklist li:last-child{border-bottom:0}
+.xp .checklist li::before{content:"";position:absolute;left:2px;top:11px;width:12px;height:12px;border-radius:4px;
+  border:1px solid var(--border-gold);background:rgba(231,177,90,.12)}
+
+/* deps tag */
+.xp .deps{font:600 11px var(--mono);color:var(--soft);letter-spacing:.04em}
+.xp .deps b{color:var(--gold)}
+
+/* ----------------------------------------------------------- buttons / cta -- */
+.xp .cta{display:flex;gap:13px;flex-wrap:wrap;margin-top:var(--sp-4)}
+.xp .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;border-radius:var(--r-pill);
+  font:600 15px var(--sans);border:1px solid var(--border-gold);color:var(--ink);background:var(--surface);
+  transition:transform .15s,border-color .15s,background .15s,box-shadow .15s;cursor:pointer}
+.xp .btn:hover{transform:translateY(-2px);border-color:var(--gold);background:var(--surface-2)}
+.xp .btn.primary{background:linear-gradient(120deg,var(--gold),var(--gold-2));color:#10241f;border-color:transparent;font-weight:800;box-shadow:0 10px 28px rgba(231,177,90,.28)}
+.xp .btn.primary:hover{box-shadow:0 14px 34px rgba(231,177,90,.4)}
+
+/* -------------------------------------------------------------------- footer */
+.xp footer{padding:var(--sp-5) 0 96px;border-top:1px solid var(--border);color:var(--soft)}
+.xp .brandline{font:700 18px var(--sans);letter-spacing:.02em;color:var(--ink)}
+.xp .legal{margin-top:14px;font:11px var(--mono);letter-spacing:.03em;color:#cdb98a;max-width:760px;line-height:1.6}
+.xp .legal b{color:#ffe7d6}
+
+/* ---------------------------------------------------------- mobile bottom nav */
+.xp .mobnav{display:none}
+
+/* ------------------------------------------------- mobile-first responsiveness */
+@media(max-width:920px){
+  .xp .g4{grid-template-columns:1fr 1fr}
+  .xp .g3{grid-template-columns:1fr 1fr}
+  .xp .phase-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:760px){
+  .xp .topbar nav{display:none}
+  .xp .g2,.xp .g3,.xp .g4{grid-template-columns:1fr}
+  .xp .phase-grid{grid-template-columns:1fr}
+  .xp .cta{flex-direction:column;align-items:stretch}
+  .xp .btn{width:100%}
+  .xp .arch-panel{padding:var(--sp-3)}
+  /* sticky bottom nav for thumbs */
+  .xp .mobnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+    background:rgba(6,20,29,.92);backdrop-filter:blur(14px);border-top:1px solid var(--border);
+    padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom))}
+  .xp .mobnav a{flex:1;text-align:center;padding:9px 2px;font:600 9.5px var(--mono);letter-spacing:.04em;color:var(--muted);border-radius:12px}
+  .xp .mobnav a[aria-current]{color:#fff;background:rgba(231,177,90,.16)}
+  .xp .mobnav a .mi{display:block;font-size:16px;margin-bottom:2px}
+  .xp footer{padding-bottom:104px}
+}

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technical Roadmap — Logos Parador · guía de desarrollo conceptual</title>
+  <meta name="description" content="Cómo se desarrolla Logos Parador (Guacarí) paso a paso según la topología del lugar: lectura del terreno, topografía, accesos, implantación por fases, diseño, infraestructura, permisos y construcción. Guía conceptual preliminar.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../assets/logo.jpg">
+  <meta name="theme-color" content="#06151f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Technical Roadmap — Logos Parador">
+  <meta property="og:description" content="Guía conceptual paso a paso para desarrollar Logos Parador según la topología del lugar. Preliminar — no reemplaza estudios técnicos ni asesoría profesional.">
+  <meta property="og:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
+  <link rel="stylesheet" href="../web/css/experience-system.css">
+  <style>
+    /* Page-local accents only (system lives in experience-system.css). */
+    .terrain{width:100%;height:auto;display:block;border-radius:var(--r-xl);border:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(23,86,92,.2),rgba(6,20,29,.5));filter:drop-shadow(0 18px 50px rgba(0,0,0,.4))}
+    .overview .diagram-card{padding:18px}
+    .loadnote{color:var(--soft);font-size:13px}
+  </style>
+</head>
+<body class="xp">
+
+  <!-- ===================== PUBLIC NAV + BANNER ===================== -->
+  <div class="topbar">
+    <a class="brand" href="../" aria-label="Logos Parador — inicio">
+      <img class="brandlogo" src="../assets/logo.jpg" alt="Logos Parador · Kairos" width="42" height="40" decoding="async">
+      <span>Logos Parador</span>
+    </a>
+    <nav aria-label="Navegación pública">
+      <a href="../">Inicio</a>
+      <a href="../masterplan/">Masterplan</a>
+      <a href="../journey/">Journey</a>
+      <a href="../map/">Mapa</a>
+      <a href="../investment/">Investment</a>
+      <a href="./" aria-current="page">Técnica</a>
+    </nav>
+  </div>
+  <div class="pbanner">Conceptual development guide · Logos Parador</div>
+
+  <!-- PROMINENT, NON-BURIED DISCLAIMER -->
+  <div class="disc" role="note">
+    <span><b>Guía conceptual preliminar.</b> No reemplaza levantamiento topográfico, estudios técnicos,
+    diseños arquitectónicos, licencias ni asesoría profesional.</span>
+  </div>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <span class="kicker"><span class="pin"></span>Technical Roadmap · conceptual</span>
+    <h1>Cómo se desarrolla<br>Logos Parador, paso a paso</h1>
+    <p class="lede">Una <b>guía conceptual</b> de desarrollo —del terreno a la operación— pensada
+      según la <b>topología del lugar</b>: la Troncal de Occidente, el corredor del Ferrocarril del
+      Pacífico y el paisaje tropical de Guacarí. Cada fase combina <b>diseño, técnica, riesgo y la
+      próxima decisión</b>. No es ingeniería ni asesoría: es una hoja de ruta para conversar.</p>
+    <nav class="cta" aria-label="Acciones principales">
+      <a class="btn primary" href="../masterplan/">Ver Masterplan</a>
+      <a class="btn" href="../map/">Ver contexto en el mapa</a>
+      <a class="btn" href="#fases">Ir a las fases</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ===================== SITE SECTION (architectural diagram) ===================== -->
+    <section class="arch">
+      <p class="eyebrow">Lectura del lugar</p>
+      <h2>El terreno manda</h2>
+      <p class="secsub">Antes de dibujar, se lee el sitio: pendientes, escorrentía, accesos y vistas.
+        La implantación se acomoda a la topología — no al revés.</p>
+      <div class="arch-panel">
+        <svg class="terrain" viewBox="0 0 1000 320" role="img" aria-label="Sección conceptual del sitio: vía, lote y corredor férreo bajo el atardecer">
+          <defs>
+            <radialGradient id="t-sun" cx="78%" cy="26%" r="40%">
+              <stop offset="0%" stop-color="#ffd98a"/><stop offset="55%" stop-color="#e7a25c" stop-opacity=".5"/>
+              <stop offset="100%" stop-color="#0a2b34" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="1000" height="320" fill="url(#t-sun)"/>
+          <circle cx="780" cy="86" r="34" fill="#ffcf76" opacity=".9"/>
+          <!-- horizon contours -->
+          <g stroke="#3f8f63" fill="none" opacity=".5" stroke-width="2">
+            <path d="M0 196 q250 -34 500 -8 t500 -10"/>
+            <path d="M0 224 q250 -28 500 -4 t500 -8"/>
+          </g>
+          <!-- ground -->
+          <path d="M0 210 q250 -30 500 -6 t500 -8 V320 H0 Z" fill="rgba(63,143,99,.18)"/>
+          <!-- road (Troncal) -->
+          <g>
+            <path d="M40 300 L360 150" stroke="#9fd0ff" stroke-width="14" opacity=".55" stroke-linecap="round"/>
+            <path d="M40 300 L360 150" stroke="#cfeaff" stroke-width="2" stroke-dasharray="10 12" opacity=".7"/>
+            <text x="60" y="296" fill="#bdeaff" font-family="ui-monospace,monospace" font-size="13">Troncal de Occidente · Ruta 25</text>
+          </g>
+          <!-- lot polygon -->
+          <g>
+            <polygon points="430,150 560,138 600,250 470,272" fill="rgba(143,229,255,.1)" stroke="#8fe5ff" stroke-width="2.5"/>
+            <text x="468" y="214" fill="#eaf6ff" font-family="ui-monospace,monospace" font-size="14" font-weight="700">Lote Logos</text>
+          </g>
+          <!-- rail corridor -->
+          <g>
+            <path d="M650 300 L900 150" stroke="#e8a25c" stroke-width="4" stroke-dasharray="9 7" opacity=".85"/>
+            <text x="700" y="296" fill="#f3d3a8" font-family="ui-monospace,monospace" font-size="13">Ferrocarril del Pacífico</text>
+          </g>
+          <!-- palm hint -->
+          <g stroke="#5fc08a" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85">
+            <path d="M150 235 q3 -34 0 -64"/><path d="M150 171 q-16 -8 -28 -16"/><path d="M150 171 q16 -8 28 -14"/>
+          </g>
+        </svg>
+        <p class="loadnote" style="margin:14px 4px 0">Diagrama conceptual, no a escala. La geometría real del lote vive en
+          <b>data/lot.json</b> y se visualiza en el <a class="more" style="color:var(--gold)" href="../map/">mapa</a> y el
+          <a class="more" style="color:var(--gold)" href="../masterplan/">masterplan</a>.</p>
+      </div>
+    </section>
+
+    <!-- ===================== OVERVIEW (13 areas) ===================== -->
+    <section class="arch overview">
+      <p class="eyebrow">Las trece áreas</p>
+      <h2>De qué se compone la guía</h2>
+      <p class="secsub">Trece frentes técnicos, encadenados por dependencias: cada uno produce una salida
+        de diseño y abre la siguiente decisión.</p>
+      <div class="grid g4">
+        <article class="diagram-card"><div class="ic">🏞️</div><h3>Lectura del terreno</h3><p>Diagnóstico de sitio, pendientes y vistas.</p></article>
+        <article class="diagram-card"><div class="ic">📐</div><h3>Topografía</h3><p>Levantamiento planialtimétrico requerido.</p></article>
+        <article class="diagram-card"><div class="ic">🛣️</div><h3>Accesos y retiros</h3><p>Entrada segura desde la Troncal y aislamientos.</p></article>
+        <article class="diagram-card"><div class="ic">🧭</div><h3>Implantación</h3><p>Distribución de programas por fases.</p></article>
+        <article class="diagram-card"><div class="ic">🏛️</div><h3>Diseño del parador</h3><p>Partido arquitectónico tropical.</p></article>
+        <article class="diagram-card"><div class="ic">🅿️</div><h3>Parqueo y circulación</h3><p>Aforo, bahías y rutas accesibles.</p></article>
+        <article class="diagram-card"><div class="ic">🍽️</div><h3>Gastronomía</h3><p>Pabellones, cocinas y logística.</p></article>
+        <article class="diagram-card"><div class="ic">🚆</div><h3>Railway Café</h3><p>Identidad férrea y mirador.</p></article>
+        <article class="diagram-card"><div class="ic">🌴</div><h3>Paisajismo</h3><p>Especies nativas y microclima.</p></article>
+        <article class="diagram-card"><div class="ic">🚰</div><h3>Sanitaria</h3><p>Agua, aguas residuales y residuos.</p></article>
+        <article class="diagram-card"><div class="ic">⚡</div><h3>Energía</h3><p>Demanda, solar y sostenibilidad.</p></article>
+        <article class="diagram-card"><div class="ic">📋</div><h3>Permisos</h3><p>Licencias, estudios y entidades.</p></article>
+      </div>
+    </section>
+
+    <!-- ===================== PHASES (JSON-driven timeline) ===================== -->
+    <section class="arch" id="fases">
+      <p class="eyebrow">Hoja de ruta</p>
+      <h2>Desarrollo por fases</h2>
+      <p class="secsub">Cada fase resume sus <b>acciones técnicas</b>, los <b>estudios requeridos</b>,
+        sus <b>dependencias</b>, el <b>nivel de riesgo</b> conceptual, la <b>salida de diseño</b> y la
+        <b>próxima decisión</b>.</p>
+      <ol class="timeline" id="trPhases"><li><p class="loadnote">Cargando hoja de ruta técnica…</p></li></ol>
+    </section>
+
+    <!-- ===================== HOW TO READ / CALLOUTS ===================== -->
+    <section class="arch">
+      <p class="eyebrow">Cómo leer esta guía</p>
+      <h2>Una conversación, no un plano</h2>
+      <hr class="landscape-rule" style="margin-bottom:26px">
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p><b>Conceptual.</b> Riesgos y estudios son orientativos. Cualquier decisión real exige topografía,
+          estudios técnicos, diseño profesional y licencias antes de construir.</p>
+      </div>
+      <div class="callout">
+        <span class="ico">🧩</span>
+        <p>Las <b>dependencias</b> indican qué fase debe resolverse antes. La topografía (T02) y los
+          accesos (T03) condicionan casi todo lo demás.</p>
+      </div>
+      <nav class="cta">
+        <a class="btn primary" href="../investment/">Ver capa operativa</a>
+        <a class="btn" href="../">Volver al inicio</a>
+      </nav>
+    </section>
+
+  </main>
+
+  <!-- ===================== FOOTER / DISCLAIMER ===================== -->
+  <footer>
+    <div class="wrap">
+      <p class="brandline">KAIROS PARADOR — Logos Parador · Guacarí</p>
+      <p class="legal"><b>Guía conceptual preliminar. No reemplaza levantamiento topográfico, estudios
+        técnicos, diseños arquitectónicos, licencias ni asesoría profesional.</b> Hoja de ruta ilustrativa
+        para orientar la conversación de desarrollo. Fuente: <code>data/technical-development-roadmap.json</code>
+        (valores conceptuales). Contexto cartográfico © OpenStreetMap contributors.</p>
+    </div>
+  </footer>
+
+  <!-- ===================== MOBILE BOTTOM NAV ===================== -->
+  <nav class="mobnav" aria-label="Navegación móvil">
+    <a href="../"><span class="mi">●</span>Inicio</a>
+    <a href="../masterplan/"><span class="mi">◫</span>Plan</a>
+    <a href="../map/"><span class="mi">⌖</span>Mapa</a>
+    <a href="../investment/"><span class="mi">◧</span>Invest</a>
+    <a href="./" aria-current="page"><span class="mi">⚙</span>Técnica</a>
+  </nav>
+
+  <script>
+  /* Renders the conceptual technical roadmap from the versioned JSON.
+     Vanilla JS, no deps, no analytics. Relative fetch (build-friendly). */
+  (function () {
+    var ROOT = '../data/';
+    var host = document.getElementById('trPhases');
+    if (!host) return;
+    var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var risk = function (r) {
+      var map = { bajo: ['risk-low', 'Riesgo bajo'], medio: ['risk-med', 'Riesgo medio'], alto: ['risk-high', 'Riesgo alto'] };
+      var m = map[r] || ['risk-med', 'Riesgo ' + esc(r)];
+      return '<span class="chip ' + m[0] + '"><span class="dot"></span>' + m[1] + '</span>';
+    };
+    var list = function (arr, cls) { return '<ul class="' + (cls || '') + '">' +
+      (arr || []).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; };
+
+    fetch(ROOT + 'technical-development-roadmap.json')
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (doc) {
+        var phases = (doc && doc.phases) || [];
+        host.innerHTML = phases.map(function (p, i) {
+          var deps = (p.dependencies && p.dependencies.length) ? p.dependencies.join(' · ') : 'sin dependencias';
+          var studies = (p.required_studies || []).map(function (s) {
+            return '<span class="chip study"><span class="dot"></span>' + esc(s) + '</span>'; }).join('');
+          return '<li>' +
+            '<span class="step-no">Fase ' + esc(p.phase_id) + ' · ' + (i + 1) + '/' + phases.length + '</span>' +
+            '<h3>' + esc(p.title) + '</h3>' +
+            '<div class="phase-card">' +
+              '<div class="chiprow">' + risk(p.risk_level) +
+                '<span class="chip"><span class="dot" style="background:var(--line)"></span>Dependencias: ' + esc(deps) + '</span>' +
+              '</div>' +
+              '<div class="phase-grid">' +
+                '<div class="quad tech"><div class="lbl"><span class="dot"></span>Técnica</div>' + list(p.technical_actions, 'checklist') + '</div>' +
+                '<div class="quad design"><div class="lbl"><span class="dot"></span>Diseño · salida</div><p>' + esc(p.design_output) + '</p></div>' +
+                '<div class="quad risk"><div class="lbl"><span class="dot"></span>Estudios requeridos</div><div class="chiprow">' + studies + '</div></div>' +
+                '<div class="quad next"><div class="lbl"><span class="dot"></span>Próximo paso</div><p>' + esc(p.next_decision) + '</p></div>' +
+              '</div>' +
+            '</div>' +
+          '</li>';
+        }).join('');
+      })
+      .catch(function (e) {
+        host.innerHTML = '<li><p class="loadnote">No se pudo cargar la hoja de ruta (' + esc(e.message) + '). ' +
+          'Esta vista requiere el build externo (ruta relativa a <code>../data/technical-development-roadmap.json</code>).</p></li>';
+      });
+  })();
+  </script>
+</body>
+</html>

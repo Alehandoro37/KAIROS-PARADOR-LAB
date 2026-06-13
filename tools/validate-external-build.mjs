@@ -31,7 +31,7 @@ if (!existsSync(BASE)) { console.error(`✗ build missing — run \`npm run buil
 ok('build root exists: ' + relative(ROOT, BASE));
 
 // route directories
-['.', 'masterplan', 'map', 'journey', 'web', 'geometry-engine', 'data'].forEach(d => {
+['.', 'masterplan', 'map', 'journey', 'technical-roadmap', 'web', 'geometry-engine', 'data'].forEach(d => {
   const p = join(BASE, d);
   (existsSync(p) && statSync(p).isDirectory()) ? ok('route dir: ' + (d === '.' ? '(root)' : d)) : fail('missing route dir: ' + d);
 });
@@ -55,9 +55,16 @@ const required = [
   'assets/logo.jpg', 'geometry-engine/masterplan/assets/logo.jpg', 'geometry-engine/map-calibration/assets/logo.jpg',
   // Operational Intelligence Layer (investment route + conceptual business layer)
   'investment/index.html', 'web/js/investment-dashboard.js',
-  'data/business/operational-model.json', 'data/business/phases.json', 'data/business/experience-economy.json'
+  'data/business/operational-model.json', 'data/business/phases.json', 'data/business/experience-economy.json',
+  // Advanced Technical Roadmap (phased development guide + experience system CSS + versioned JSON)
+  'technical-roadmap/index.html', 'web/css/experience-system.css', 'data/technical-development-roadmap.json'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
+
+// CORE present in the build (packaging-only — these are NOT modified by the build/refinement)
+['geometry-engine/v2', 'data/lot.json', 'geometry-engine/map-calibration/calibration.js'].forEach(c => {
+  existsSync(join(BASE, c)) ? ok('core present (untouched): ' + c) : fail('core missing from build: ' + c);
+});
 
 // head polish (favicon link + meta description) on the public pages
 [
@@ -90,6 +97,47 @@ else {
 ].forEach(([f, href]) => {
   const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
   readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → investment`) : fail(`cross-nav: ${f} missing investment link (${href})`);
+});
+
+// Advanced Technical Roadmap — phased development guide route + content + cross-nav
+const trPath = join(BASE, 'technical-roadmap', 'index.html');
+if (!existsSync(trPath)) { fail('missing technical-roadmap route'); }
+else {
+  const T = readFileSync(trPath, 'utf8');
+  const Tn = T.replace(/\s+/g, ' '); // collapse whitespace so wrapped text still matches
+  /http-equiv=["']refresh/i.test(T) ? fail('technical-roadmap is a redirect, expected the guide page') : ok('technical-roadmap present (not a redirect)');
+  /No reemplaza levantamiento topogr[aá]fico, estudios t[eé]cnicos, dise[ñn]os arquitect[oó]nicos, licencias ni asesor[ií]a profesional/i.test(Tn)
+    ? ok('technical-roadmap: prominent disclaimer') : fail('technical-roadmap: missing required disclaimer');
+  /href=["']\.\.\/web\/css\/experience-system\.css["']/i.test(T) ? ok('technical-roadmap: experience-system.css referenced') : fail('technical-roadmap: missing experience-system.css');
+  /fetch\(\s*[^)]*technical-development-roadmap\.json/i.test(T) ? ok('technical-roadmap: technical JSON referenced (relative)') : fail('technical-roadmap: missing technical JSON reference');
+  /id=["']trPhases["']/.test(T) ? ok('technical-roadmap: phases container') : fail('technical-roadmap: missing phases container');
+}
+// versioned technical JSON — schema + required per-phase fields, conceptual disclaimer
+const trJsonPath = join(BASE, 'data', 'technical-development-roadmap.json');
+if (!existsSync(trJsonPath)) { fail('missing data/technical-development-roadmap.json'); }
+else {
+  let J = null;
+  try { J = JSON.parse(readFileSync(trJsonPath, 'utf8')); } catch (e) { fail('technical JSON not valid JSON: ' + e.message); }
+  if (J) {
+    /^kairos\.technical-development-roadmap\//.test(J.schema || '') ? ok('technical JSON: schema id') : fail('technical JSON: bad/missing schema id');
+    typeof J.version === 'string' ? ok('technical JSON: versioned (' + J.version + ')') : fail('technical JSON: missing version');
+    /No reemplaza levantamiento topogr[aá]fico/i.test(J.disclaimer || '') ? ok('technical JSON: conceptual disclaimer') : fail('technical JSON: missing disclaimer');
+    const ph = Array.isArray(J.phases) ? J.phases : [];
+    ph.length >= 10 ? ok(`technical JSON: ${ph.length} phases`) : fail(`technical JSON: too few phases (${ph.length})`);
+    const fields = ['phase_id', 'title', 'technical_actions', 'required_studies', 'dependencies', 'risk_level', 'design_output', 'next_decision'];
+    const bad = ph.filter(p => !fields.every(k => k in p));
+    bad.length === 0 ? ok('technical JSON: every phase has required fields') : fail(`technical JSON: ${bad.length} phase(s) missing fields`);
+    const RISKS = new Set(['bajo', 'medio', 'alto']);
+    ph.every(p => RISKS.has(p.risk_level)) ? ok('technical JSON: risk_level values valid') : fail('technical JSON: invalid risk_level value');
+  }
+}
+// cross-navigation: every public page links to /technical-roadmap/ (and the new page links back)
+[['index.html', './technical-roadmap/'], ['geometry-engine/masterplan/index.html', '../../technical-roadmap/'],
+ ['geometry-engine/map-calibration/index.html', '../../technical-roadmap/'], ['investment/index.html', '../technical-roadmap/'],
+ ['technical-roadmap/index.html', '../investment/']
+].forEach(([f, href]) => {
+  const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
+  readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → ${href}`) : fail(`cross-nav: ${f} missing link (${href})`);
 });
 
 // public landing (commercial entry) — root index.html

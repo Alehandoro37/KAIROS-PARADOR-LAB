@@ -1,0 +1,200 @@
+{
+  "schema": "kairos.technical-development-roadmap/v1",
+  "version": "1.0.0",
+  "status": "CONCEPTUAL — guía preliminar de desarrollo. NO reemplaza levantamiento topográfico, estudios técnicos, diseños arquitectónicos, licencias ni asesoría profesional.",
+  "site": {
+    "name": "Logos Parador",
+    "location": "Guacarí · Valle del Cauca · Colombia",
+    "context": "Costado oriental sobre la Troncal de Occidente (Ruta 25) y el corredor del Ferrocarril del Pacífico; clima tropical de valle interandino.",
+    "source_geometry": "data/lot.json (no se modifica)"
+  },
+  "legend": {
+    "risk_level": ["bajo", "medio", "alto"],
+    "note": "risk_level = riesgo CONCEPTUAL de definición/ejecución, no una evaluación de ingeniería."
+  },
+  "phases": [
+    {
+      "phase_id": "T01",
+      "title": "Lectura del terreno",
+      "technical_actions": [
+        "Recorrido de campo y registro fotográfico del lote y su entorno inmediato",
+        "Identificar pendientes aparentes, zonas bajas, escorrentía y vegetación existente",
+        "Mapear relación visual con vía, corredor férreo y horizonte de atardecer"
+      ],
+      "required_studies": ["Inspección visual preliminar", "Cartografía base (OSM / Google Earth)"],
+      "dependencies": [],
+      "risk_level": "bajo",
+      "design_output": "Diagnóstico conceptual del sitio: vocación del terreno y oportunidades de paisaje",
+      "next_decision": "¿Confirmar el área aprovechable y el frente sobre la Troncal?"
+    },
+    {
+      "phase_id": "T02",
+      "title": "Topografía requerida",
+      "technical_actions": [
+        "Definir alcance de levantamiento topográfico planialtimétrico georreferenciado",
+        "Marcar necesidad de curvas de nivel, cotas y amarre a mojones oficiales",
+        "Reservar puntos de control para replanteo futuro"
+      ],
+      "required_studies": ["Levantamiento topográfico profesional (pendiente)", "Geodesia / amarre catastral"],
+      "dependencies": ["T01"],
+      "risk_level": "alto",
+      "design_output": "Especificación conceptual de la topografía a contratar (no es topografía real)",
+      "next_decision": "¿Contratar levantamiento topográfico certificado antes de diseñar implantación?"
+    },
+    {
+      "phase_id": "T03",
+      "title": "Accesos y retiros",
+      "technical_actions": [
+        "Localizar acceso vehicular seguro desde la Troncal con carriles de desaceleración conceptuales",
+        "Definir retiros viales y aislamientos respecto a vía y corredor férreo",
+        "Separar flujo peatonal de entrada del flujo vehicular"
+      ],
+      "required_studies": ["Normativa de accesos a vía nacional (INVÍAS / ANI)", "Retiros del POT municipal"],
+      "dependencies": ["T01", "T02"],
+      "risk_level": "alto",
+      "design_output": "Esquema conceptual de acceso, retiros y umbral de llegada",
+      "next_decision": "¿Validar el punto de acceso con la autoridad vial competente?"
+    },
+    {
+      "phase_id": "T04",
+      "title": "Implantación por fases",
+      "technical_actions": [
+        "Distribuir programas sobre el polígono respetando retiros y topografía",
+        "Definir huella de Fase 1 (plaza + food) y reservas para fases posteriores",
+        "Orientar volúmenes hacia atardecer y mirador férreo"
+      ],
+      "required_studies": ["Estudio de asoleamiento conceptual", "Capacidad de carga del lote"],
+      "dependencies": ["T02", "T03"],
+      "risk_level": "medio",
+      "design_output": "Plano de implantación conceptual por fases (relativo a data/lot.json)",
+      "next_decision": "¿Congelar la huella de Fase 1 para avanzar a diseño?"
+    },
+    {
+      "phase_id": "T05",
+      "title": "Diseño del parador",
+      "technical_actions": [
+        "Definir lenguaje arquitectónico tropical: marquesinas, sombra, ventilación cruzada",
+        "Dimensionar la plaza orgánica como corazón del recorrido",
+        "Establecer materialidad premium (madera, piedra local, cubiertas ligeras)"
+      ],
+      "required_studies": ["Anteproyecto arquitectónico (pendiente)", "Estudio bioclimático"],
+      "dependencies": ["T04"],
+      "risk_level": "medio",
+      "design_output": "Partido arquitectónico conceptual y paleta de materiales",
+      "next_decision": "¿Aprobar el partido arquitectónico para desarrollo de detalle?"
+    },
+    {
+      "phase_id": "T06",
+      "title": "Parqueo y circulación",
+      "technical_actions": [
+        "Dimensionar parqueo velado entre vegetación según aforo conceptual",
+        "Trazar circulación vehicular, bahías y puntos de giro",
+        "Garantizar rutas accesibles y de servicio diferenciadas"
+      ],
+      "required_studies": ["Estudio de movilidad / aforo", "Norma de accesibilidad (NTC 4904 / 6047)"],
+      "dependencies": ["T03", "T04"],
+      "risk_level": "medio",
+      "design_output": "Esquema conceptual de parqueo y circulación integrada al paisaje",
+      "next_decision": "¿Definir la capacidad objetivo de parqueo de Fase 1?"
+    },
+    {
+      "phase_id": "T07",
+      "title": "Gastronomía / pabellones",
+      "technical_actions": [
+        "Definir pabellones gastronómicos independientes con decks abiertos",
+        "Prever cocinas, extracción, trampas de grasa y logística de insumos",
+        "Modular crecimiento de oferta entre jardines"
+      ],
+      "required_studies": ["Normativa sanitaria de manipulación de alimentos (INVIMA)", "Diseño de cocinas comerciales"],
+      "dependencies": ["T05"],
+      "risk_level": "medio",
+      "design_output": "Programa conceptual de pabellones y servicios de cocina",
+      "next_decision": "¿Cuántos pabellones abren en Fase 1 y bajo qué modelo operativo?"
+    },
+    {
+      "phase_id": "T08",
+      "title": "Railway Café / identidad férrea",
+      "technical_actions": [
+        "Diseñar el café-mirador sobre la memoria del corredor férreo",
+        "Tratar el andén como elemento narrativo y de marca",
+        "Respetar aislamientos respecto a la faja férrea"
+      ],
+      "required_studies": ["Servidumbre / faja del corredor férreo", "Concertación con titular del corredor"],
+      "dependencies": ["T03", "T05"],
+      "risk_level": "alto",
+      "design_output": "Concepto del Railway Café e identidad ferroviaria del destino",
+      "next_decision": "¿Aclarar el estatus legal y los aislamientos del corredor férreo?"
+    },
+    {
+      "phase_id": "T09",
+      "title": "Paisajismo tropical",
+      "technical_actions": [
+        "Seleccionar especies nativas/tropicales de bajo consumo hídrico",
+        "Diseñar canopy, sombra y jardines que regulen microclima",
+        "Integrar manejo de aguas lluvia como paisaje (jardines de lluvia)"
+      ],
+      "required_studies": ["Inventario forestal / silvicultura", "Plan de paisajismo y riego"],
+      "dependencies": ["T04"],
+      "risk_level": "bajo",
+      "design_output": "Master de paisajismo tropical conceptual",
+      "next_decision": "¿Conservar vegetación existente o renovar la cobertura vegetal?"
+    },
+    {
+      "phase_id": "T10",
+      "title": "Infraestructura sanitaria",
+      "technical_actions": [
+        "Definir abastecimiento de agua potable y almacenamiento",
+        "Resolver aguas residuales (alcantarillado o tratamiento in situ)",
+        "Diseñar manejo de aguas lluvia y residuos sólidos"
+      ],
+      "required_studies": ["Estudio hidrosanitario", "Permiso de vertimientos / concesión de aguas (CVC)"],
+      "dependencies": ["T02", "T04"],
+      "risk_level": "alto",
+      "design_output": "Esquema conceptual de redes hidrosanitarias",
+      "next_decision": "¿Hay conexión a redes municipales o se requiere planta de tratamiento?"
+    },
+    {
+      "phase_id": "T11",
+      "title": "Energía y sostenibilidad",
+      "technical_actions": [
+        "Dimensionar demanda eléctrica y opción solar fotovoltaica",
+        "Definir iluminación de bajo consumo y cálida para atardecer",
+        "Plantear metas conceptuales de eficiencia y bajo impacto"
+      ],
+      "required_studies": ["Estudio eléctrico (RETIE / RETILAP)", "Factibilidad de generación solar"],
+      "dependencies": ["T04"],
+      "risk_level": "medio",
+      "design_output": "Estrategia conceptual de energía y sostenibilidad",
+      "next_decision": "¿Adoptar generación solar desde Fase 1 o dejarla como reserva?"
+    },
+    {
+      "phase_id": "T12",
+      "title": "Permisos y estudios",
+      "technical_actions": [
+        "Consolidar requisitos de licencia de construcción y usos del suelo",
+        "Coordinar estudios ambientales y de riesgo según normativa",
+        "Verificar concertaciones con vía nacional y corredor férreo"
+      ],
+      "required_studies": ["Licencia urbanística / curaduría", "Estudio de amenaza y riesgo", "Concepto ambiental (CVC)"],
+      "dependencies": ["T02", "T03", "T08", "T10"],
+      "risk_level": "alto",
+      "design_output": "Matriz conceptual de permisos, estudios y entidades",
+      "next_decision": "¿Iniciar trámites de uso del suelo antes de diseño de detalle?"
+    },
+    {
+      "phase_id": "T13",
+      "title": "Construcción por etapas",
+      "technical_actions": [
+        "Secuenciar obra: adecuación de terreno, redes, plaza y Fase 1",
+        "Definir frentes que permitan operar mientras se construyen fases siguientes",
+        "Establecer hitos de control de calidad y recepción por etapa"
+      ],
+      "required_studies": ["Presupuesto y programación de obra", "Plan de manejo de obra / SST"],
+      "dependencies": ["T04", "T05", "T06", "T10", "T11", "T12"],
+      "risk_level": "medio",
+      "design_output": "Plan conceptual de construcción por etapas",
+      "next_decision": "¿Qué alcance mínimo viable abre Logos Parador al público?"
+    }
+  ],
+  "disclaimer": "Guía conceptual preliminar. No reemplaza levantamiento topográfico, estudios técnicos, diseños arquitectónicos, licencias ni asesoría profesional."
+}
