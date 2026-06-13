@@ -13,51 +13,67 @@
   <meta property="og:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
   <link rel="stylesheet" href="../../web/css/lab.css">
   <style>
-    /* Page-specific styles (lab.css reused untouched). */
+    /* ============================================================
+       Masterplan — PRESENTATION ONLY (lab.css reused untouched;
+       masterplan.js geometry/render untouched). Tokens harmonized
+       at page scope with the public Logos Parador hospitality
+       palette so the panel/legend feel consistent across pages.
+       ============================================================ */
+    :root{
+      --gold:#e7b15a; --line:#8fe5ff; --green:#5fc08a;
+      --lp-soft:#94b8b2; --lp-border:rgba(143,229,255,.16); --lp-border-gold:rgba(231,177,90,.30);
+      --lp-surface:rgba(3,16,29,.86);
+    }
+    /* refined control panel (layers on lab.css .panel/fieldset/legend) */
+    .panel{padding:26px 22px}
+    .panel h1{font-size:38px;margin:14px 0 8px;letter-spacing:-.03em}
+    fieldset{border:1px solid var(--lp-border);border-radius:18px;margin:16px 0;padding:16px}
+    legend{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:0 6px}
+    .fineprint{font-size:11.5px;color:#9cc6dd;line-height:1.5}
     .stage{position:relative;padding:24px}
     #mpCanvas{width:100%;height:calc(100vh - 48px);background:#061526;border:1px solid rgba(143,229,255,.18);border-radius:22px}
-    .prelim-chip{display:inline-block;margin:10px 0 4px;padding:6px 10px;border:1px solid #ff9e6b;border-radius:999px;color:#ffd9c9;background:rgba(255,158,107,.16);font:11px var(--mono);letter-spacing:.04em}
+    .prelim-chip{display:inline-flex;align-items:center;gap:7px;margin:8px 0 4px;padding:6px 12px;border:1px solid var(--lp-border-gold);border-radius:999px;color:#ffd9c9;background:rgba(231,177,90,.1);font:600 10px var(--mono);letter-spacing:.1em;text-transform:uppercase}
     /* Discrete legal note (relocated from the big centre bar — present, not removed). */
-    .legalnote{position:absolute;left:44px;bottom:40px;max-width:46%;color:#9db4c4;font:10px var(--mono);letter-spacing:.04em;line-height:1.4;z-index:500;opacity:.78}
+    .legalnote{position:absolute;left:44px;bottom:40px;max-width:44%;color:#9db4c4;font:10px var(--mono);letter-spacing:.04em;line-height:1.45;z-index:500;opacity:.72}
     .legalnote b{color:#ffd9c9;font-weight:700}
-    /* Floating zoom controls (premium, top-right of the stage). */
+    /* Floating zoom controls (premium, top-right of the stage) — KEPT. */
     .zoomctl{position:absolute;right:44px;top:40px;display:flex;flex-direction:column;gap:8px;z-index:600}
-    .zoomctl button{width:40px;height:40px;border-radius:12px;border:1px solid rgba(143,229,255,.30);background:rgba(3,16,29,.82);color:#eaf6ff;font:600 18px var(--mono);cursor:pointer;backdrop-filter:blur(8px)}
-    .zoomctl button:hover{border-color:var(--gold);color:#fff}
+    .zoomctl button{width:42px;height:42px;border-radius:13px;border:1px solid rgba(143,229,255,.28);background:rgba(3,16,29,.84);color:#eaf6ff;font:600 18px var(--mono);cursor:pointer;backdrop-filter:blur(8px);box-shadow:0 6px 18px rgba(0,0,0,.32);transition:.15s}
+    .zoomctl button:hover{border-color:var(--gold);color:#fff;transform:translateY(-1px)}
     .zoomctl .rst{font-size:12px;letter-spacing:.02em}
-    .mpmetrics{position:absolute;right:44px;bottom:40px;max-width:340px;background:rgba(3,16,29,.86);border:1px solid rgba(143,229,255,.18);border-radius:16px;padding:14px;font:12px var(--mono);color:#cbeeff;z-index:500}
-    .mpmetrics h4{margin:0 0 8px;color:var(--gold)}
+    .mpmetrics{position:absolute;right:44px;bottom:40px;max-width:340px;background:var(--lp-surface);border:1px solid var(--lp-border);border-radius:18px;padding:16px;font:12px var(--mono);color:#cbeeff;z-index:500;backdrop-filter:blur(8px);box-shadow:0 14px 36px rgba(0,0,0,.34)}
+    .mpmetrics h4{margin:0 0 8px;color:var(--gold);font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase}
     .mini{width:100%;border-collapse:collapse;margin-top:8px}
-    .mini td{padding:3px 0;border-bottom:1px solid rgba(143,229,255,.10)}
+    .mini td{padding:4px 0;border-bottom:1px solid rgba(143,229,255,.1)}
     .mini .num{color:var(--gold);text-align:right;white-space:nowrap}
-    .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
-    .lyr{display:flex;align-items:center;gap:4px;color:#b9e5ff;font-size:12px;margin:4px 0 4px 10px}
-    .grpbox{margin:10px 0;padding:8px 0;border-top:1px solid rgba(143,229,255,.12)}
-    .grp{display:flex;align-items:center;gap:6px;color:var(--gold);font:11px var(--mono);letter-spacing:.06em}
-    .grphdr{display:block;color:var(--gold);font:11px var(--mono);letter-spacing:.06em;margin-bottom:4px}
-    .mood{display:flex;align-items:center;gap:6px;color:#cbeeff;font-size:12px;margin:5px 0}
+    .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:middle;box-shadow:0 0 0 1px rgba(0,0,0,.25) inset}
+    .lyr{display:flex;align-items:center;gap:6px;color:#b9e5ff;font-size:12.5px;margin:6px 0 6px 10px}
+    .grpbox{margin:10px 0;padding:10px 0;border-top:1px solid var(--lp-border)}
+    .grp{display:flex;align-items:center;gap:7px;color:var(--gold);font:600 11px var(--mono);letter-spacing:.08em}
+    .grphdr{display:block;color:var(--gold);font:600 11px var(--mono);letter-spacing:.08em;margin-bottom:4px}
+    .mood{display:flex;align-items:center;gap:7px;color:#cbeeff;font-size:12.5px;margin:6px 0}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center}
     .row3 .btn{justify-content:center;padding:8px 10px}
     .reset{width:100%}
     /* brand + public nav + conceptual banner + loading overlay (presentation only) */
-    .brandrow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-    .brandrow img{height:40px;width:auto;border-radius:8px;display:block}
-    .brandrow b{font:700 13px var(--mono);letter-spacing:.06em;color:var(--gold)}
-    .loadlogo{height:64px;width:auto;border-radius:12px;display:block;margin:0 auto 16px}
-    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
-    .pubnav a{padding:6px 10px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid rgba(143,229,255,.2);text-decoration:none}
+    .brandrow{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+    .brandrow img{height:42px;width:auto;border-radius:10px;display:block;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+    .brandrow b{font:700 13px var(--mono);letter-spacing:.08em;color:var(--gold)}
+    .loadlogo{height:64px;width:auto;border-radius:14px;display:block;margin:0 auto 16px;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+    .pubnav a{padding:6px 11px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid var(--lp-border);text-decoration:none;transition:.15s}
     .pubnav a:hover,.pubnav a[aria-current]{color:#fff;border-color:var(--gold);background:rgba(231,177,90,.14)}
-    .cbanner{position:absolute;left:44px;top:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid rgba(231,177,90,.18);border-radius:999px;padding:5px 11px}
+    .cbanner{position:absolute;left:44px;top:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid var(--lp-border-gold);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
     .loading{position:absolute;inset:24px;border-radius:22px;background:rgba(4,16,28,.94);display:grid;place-items:center;z-index:700;color:#cbeeff;font:13px var(--mono);text-align:center;transition:opacity .45s}
     .loading.hide{opacity:0;pointer-events:none}
     .loading .spin{width:34px;height:34px;border:3px solid rgba(143,229,255,.22);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
     @keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:900px){
-      #mpCanvas{height:70vh}
-      .zoomctl{right:14px;top:14px} .zoomctl button{width:34px;height:34px}
+      #mpCanvas{height:68vh}
+      .zoomctl{right:14px;top:14px} .zoomctl button{width:38px;height:38px}
       .mpmetrics{right:14px;left:14px;bottom:14px;max-width:none}
-      .cbanner{left:14px;top:14px} .legalnote{left:14px;max-width:88%}
+      .cbanner{left:14px;top:14px} .legalnote{left:14px;max-width:88%;bottom:14px}
     }
   </style>
 </head>

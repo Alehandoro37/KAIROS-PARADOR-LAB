@@ -14,34 +14,56 @@
   <link rel="stylesheet" href="../../web/css/lab.css">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <style>
-    /* Page-specific styles (lab.css is reused untouched). */
+    /* ============================================================
+       Map Calibration — PRESENTATION ONLY (lab.css + Leaflet reused
+       untouched; calibration.js / osm-context.js untouched). Tokens
+       harmonized at page scope with the public hospitality palette.
+       ============================================================ */
+    :root{
+      --gold:#e7b15a; --line:#8fe5ff; --green:#5fc08a;
+      --lp-border:rgba(143,229,255,.16); --lp-border-gold:rgba(231,177,90,.30);
+      --lp-surface:rgba(3,16,29,.86);
+    }
+    .panel{padding:26px 22px}
+    .panel h1{font-size:38px;margin:14px 0 8px;letter-spacing:-.03em}
+    fieldset{border:1px solid var(--lp-border);border-radius:18px;margin:16px 0;padding:16px}
+    legend{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:0 6px}
+    .fineprint{font-size:11.5px;color:#9cc6dd;line-height:1.5}
     #map{width:100%;height:calc(100vh - 48px);background:#061526;border:1px solid rgba(143,229,255,.18);border-radius:22px}
     .stage{position:relative;padding:24px}
-    .prelim-chip{display:inline-block;margin:10px 0 4px;padding:6px 10px;border:1px solid var(--oxide);border-radius:999px;color:#ffd9c9;background:rgba(176,85,60,.18);font:11px var(--mono);letter-spacing:.04em}
-    .coords-box{position:absolute;left:44px;top:44px;max-width:340px;background:rgba(3,16,29,.85);border:1px solid rgba(143,229,255,.18);border-radius:16px;padding:14px;font:12px var(--mono);color:#cbeeff;pointer-events:none;z-index:500}
-    .coords-box h4{margin:0 0 8px;color:var(--gold);font-size:12px}
+    .prelim-chip{display:inline-flex;align-items:center;gap:7px;margin:8px 0 4px;padding:6px 12px;border:1px solid var(--lp-border-gold);border-radius:999px;color:#ffd9c9;background:rgba(231,177,90,.1);font:600 10px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+    /* Static context legend — orients the viewer (presentation only, no map logic). */
+    .ctxlegend{list-style:none;margin:0;padding:0}
+    .ctxlegend li{display:flex;align-items:center;gap:9px;padding:6px 0;color:#cbeeff;font-size:12.5px;border-bottom:1px solid rgba(143,229,255,.08)}
+    .ctxlegend li:last-child{border-bottom:0}
+    .ctxlegend .ln{width:18px;height:0;border-top-width:3px;border-top-style:solid;flex:0 0 18px}
+    .ctxlegend .sq{width:13px;height:13px;border-radius:3px;flex:0 0 13px}
+    .ctxlegend b{color:#eaf6ff;font-weight:700}
+    .ctxlegend small{display:block;color:#9cc6dd;font:11px var(--mono)}
+    .coords-box{position:absolute;left:44px;top:44px;max-width:340px;background:var(--lp-surface);border:1px solid var(--lp-border);border-radius:18px;padding:16px;font:12px var(--mono);color:#cbeeff;pointer-events:none;z-index:500;backdrop-filter:blur(8px);box-shadow:0 14px 36px rgba(0,0,0,.34)}
+    .coords-box h4{margin:0 0 8px;color:var(--gold);font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase}
     .coords-box code{color:#bdeaff}
-    .offline-banner{position:absolute;right:44px;top:44px;max-width:320px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:12px 14px;font:12px var(--mono);z-index:600;display:none}
+    .offline-banner{position:absolute;right:44px;top:44px;max-width:320px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:12px 14px;font:12px var(--mono);z-index:600;display:none;box-shadow:0 14px 36px rgba(0,0,0,.34)}
     .offline-banner.show{display:block}
     .leaflet-container{font-family:var(--mono)}
-    .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(255,211,107,.5);font:700 13px var(--mono);letter-spacing:.12em;pointer-events:none;text-align:center}
+    .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(231,177,90,.5);font:700 12px var(--mono);letter-spacing:.14em;pointer-events:none;text-align:center}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
     /* brand + public nav + conceptual banner + loading overlay (presentation only) */
-    .brandrow{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-    .brandrow img{height:40px;width:auto;border-radius:8px;display:block}
-    .brandrow b{font:700 13px var(--mono);letter-spacing:.06em;color:var(--gold)}
-    .loadlogo{height:64px;width:auto;border-radius:12px;display:block;margin:0 auto 16px}
-    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
-    .pubnav a{padding:6px 10px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid rgba(143,229,255,.2);text-decoration:none}
+    .brandrow{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+    .brandrow img{height:42px;width:auto;border-radius:10px;display:block;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+    .brandrow b{font:700 13px var(--mono);letter-spacing:.08em;color:var(--gold)}
+    .loadlogo{height:64px;width:auto;border-radius:14px;display:block;margin:0 auto 16px;box-shadow:0 8px 22px rgba(0,0,0,.4)}
+    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+    .pubnav a{padding:6px 11px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid var(--lp-border);text-decoration:none;transition:.15s}
     .pubnav a:hover,.pubnav a[aria-current]{color:#fff;border-color:var(--gold);background:rgba(231,177,90,.14)}
-    .cbanner{position:absolute;right:44px;bottom:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid rgba(231,177,90,.18);border-radius:999px;padding:5px 11px}
+    .cbanner{position:absolute;right:44px;bottom:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid var(--lp-border-gold);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
     .loading{position:absolute;inset:24px;border-radius:22px;background:rgba(4,16,28,.94);display:grid;place-items:center;z-index:700;color:#cbeeff;font:13px var(--mono);text-align:center;transition:opacity .45s}
     .loading.hide{opacity:0;pointer-events:none}
     .loading .spin{width:34px;height:34px;border:3px solid rgba(143,229,255,.22);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
     @keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:900px){
-      #map{height:70vh}
+      #map{height:68vh}
       .coords-box{left:14px;top:14px;right:14px;max-width:none}
       .offline-banner{right:14px;left:14px;top:auto;bottom:58px;max-width:none}
       .cbanner{right:14px;bottom:14px}
@@ -68,6 +90,16 @@
     <p class="fineprint">Superpone el polígono de <b>data/lot.json</b> (WGS84, trazado sobre Google Earth)
       sobre un mapa base <b>OpenStreetMap</b> para alinearlo visualmente con la infraestructura cercana.
       Nada aquí es catastro ni levantamiento. Solo los <i>tiles</i> requieren internet; el resto funciona offline.</p>
+
+    <fieldset>
+      <legend>Qué estás viendo</legend>
+      <ul class="ctxlegend">
+        <li><span class="sq" style="background:#8fe5ff"></span><span><b>Lote Logos Parador</b><small>polígono · data/lot.json</small></span></li>
+        <li><span class="ln" style="border-top-color:#9fd0ff"></span><span><b>Troncal de Occidente</b><small>Ruta 25 · Panamericana</small></span></li>
+        <li><span class="ln" style="border-top-color:#ffd36b;border-top-style:dashed"></span><span><b>Ferrocarril del Pacífico</b><small>corredor férreo</small></span></li>
+        <li><span class="ln" style="border-top-color:#7dffa8;border-top-style:dotted"></span><span><b>Contexto Guacarí</b><small>amenities · landuse cercanos</small></span></li>
+      </ul>
+    </fieldset>
 
     <fieldset>
       <legend>Capas</legend>
