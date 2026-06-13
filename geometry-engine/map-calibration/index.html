@@ -60,6 +60,52 @@
     .bigdisc b{color:#ffe7d6}
     .ts-zlbl{color:#eaf6ff;font:600 11px var(--mono);text-shadow:0 1px 3px #05101a;white-space:nowrap;pointer-events:none}
     .ts-rail{color:#f3d3a8;font:14px var(--mono);text-shadow:0 1px 3px #05101a}
+    /* ===== Spatial Design Workspace (single-screen overlays) ===== */
+    .ws-toolbar{position:absolute;left:44px;right:44px;top:40px;z-index:540;display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+      padding:8px 12px;background:rgba(3,16,29,.86);border:1px solid rgba(143,229,255,.2);border-radius:14px;backdrop-filter:blur(8px)}
+    .ws-toolbar .ws-title{font:700 11px var(--mono);letter-spacing:.08em;color:var(--gold);margin-right:6px}
+    .ws-tb{border:1px solid rgba(143,229,255,.28);background:rgba(255,255,255,.04);color:#eaf6ff;border-radius:999px;
+      padding:8px 13px;font:600 12px var(--mono);cursor:pointer;transition:.15s}
+    .ws-tb:hover{border-color:var(--gold);color:#fff}
+    .ws-tb[aria-pressed="true"]{background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border-color:transparent}
+    .ws-sep{flex:1}
+    .ws-palette,.ws-notebar{position:absolute;left:44px;top:92px;z-index:540;max-width:320px;
+      background:rgba(3,16,29,.9);border:1px solid rgba(143,229,255,.2);border-radius:14px;padding:12px;backdrop-filter:blur(8px)}
+    .ws-palhd{font:600 10px var(--mono);letter-spacing:.08em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+    #wsPaletteList{display:flex;flex-wrap:wrap;gap:6px}
+    .ws-pal{border:1px solid;background:rgba(255,255,255,.04);color:#eaf6ff;border-radius:10px;padding:7px 10px;font:600 11px var(--mono);cursor:pointer;opacity:.7}
+    .ws-pal.on,.ws-pal:hover{opacity:1;background:rgba(231,177,90,.14)}
+    .ws-notebar{display:flex;align-items:center;gap:8px;font:12px var(--mono);color:#cbeeff;max-width:none;right:44px}
+    .ws-notebar select{background:rgba(4,16,28,.6);color:#eaf6ff;border:1px solid rgba(143,229,255,.3);border-radius:8px;padding:5px}
+    .ws-bottom{position:absolute;left:44px;right:44px;bottom:36px;z-index:530;display:grid;grid-template-columns:1.4fr 1fr;gap:12px;pointer-events:none}
+    .ws-props,.ws-side{pointer-events:auto;background:rgba(3,16,29,.88);border:1px solid rgba(143,229,255,.2);border-radius:14px;padding:12px 14px;backdrop-filter:blur(8px);font:12px var(--mono);color:#cbeeff;max-height:220px;overflow:auto}
+    .ws-prow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .ws-prow b{color:#eaf6ff;font-size:13px}
+    .ws-badge{font:700 10px var(--mono);padding:3px 9px;border-radius:999px}
+    .ws-badge.ok{color:#bdeed3;border:1px solid rgba(95,192,138,.5)} .ws-badge.warning{color:#f1ddb6;border:1px solid rgba(231,177,90,.5)} .ws-badge.conflict{color:#f3c9bb;border:1px solid rgba(224,121,90,.5)}
+    .ws-pgrid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-bottom:8px}
+    .ws-pgrid span:nth-child(odd){color:#9cc6dd}
+    .ws-props label{display:block;margin:6px 0;color:#9cc6dd}
+    .ws-props input,.ws-props select,.ws-props textarea{width:100%;background:rgba(4,16,28,.6);color:#eaf6ff;border:1px solid rgba(143,229,255,.28);border-radius:8px;padding:6px;font:12px var(--mono)}
+    .ws-flags{margin:8px 0 0;padding-left:16px} .ws-flags li{margin:2px 0} .ws-flags .conflict{color:#f3c9bb} .ws-flags .warning{color:#f1ddb6}
+    .ws-ok{color:#bdeed3;margin:8px 0 0}
+    .ws-actrow,.ws-exports{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .ws-b{border:1px solid rgba(143,229,255,.28);background:rgba(255,255,255,.04);color:#eaf6ff;border-radius:8px;padding:7px 10px;font:600 11px var(--mono);cursor:pointer}
+    .ws-b:hover{border-color:var(--gold);color:#fff}
+    .ws-x{background:none;border:0;color:#f3c9bb;cursor:pointer;font-size:14px}
+    .ws-status{color:var(--gold);font-size:11px;margin:0 0 8px}
+    .ws-hint{color:#9cc6dd;font-size:11px;line-height:1.5;margin:6px 0 0}
+    /* element + note markers */
+    .ws-el span{display:inline-block;transform:translate(-50%,-50%);white-space:nowrap;background:rgba(4,16,28,.78);border:1px solid rgba(143,229,255,.4);color:#eaf6ff;font:600 10px var(--mono);padding:2px 6px;border-radius:7px;cursor:grab}
+    .ws-el.sel span{border-color:var(--gold);color:#fff}
+    .ws-note{font-size:16px;filter:drop-shadow(0 1px 2px #000)}
+    @media(max-width:900px){
+      .ws-toolbar{left:14px;right:14px;top:14px;padding:6px 8px}
+      .ws-tb{padding:9px 12px}
+      .ws-palette,.ws-notebar{left:14px;right:14px;top:74px;max-width:none}
+      .ws-bottom{left:14px;right:14px;bottom:14px;grid-template-columns:1fr}
+      .ws-side{display:none}
+    }
     .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(231,177,90,.5);font:700 12px var(--mono);letter-spacing:.14em;pointer-events:none;text-align:center}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
@@ -126,8 +172,9 @@
       <div class="ctrl">
         <label for="baseLayer">Mapa base</label>
         <select id="baseLayer">
-          <option value="osm">OpenStreetMap (requiere internet)</option>
-          <option value="placeholder">Contexto / satélite — placeholder (offline)</option>
+          <option value="osm">OpenStreetMap Streets (requiere internet)</option>
+          <option value="satellite">ESRI World Imagery (satélite, sin key)</option>
+          <option value="placeholder">Context placeholder (offline)</option>
         </select>
       </div>
       <button class="btn reset" id="resetBtn" type="button">Reset view</button>
@@ -307,6 +354,47 @@
     <div class="wm">PRELIMINAR — NO CATASTRO / NO TOPOGRAFÍA</div>
     <div class="cbanner">Conceptual visualization · Logos Parador</div>
     <div class="loading" id="mapLoading"><div><img class="loadlogo" src="assets/logo.jpg" alt="Logos Parador · Kairos"><div class="spin"></div>Cargando mapa…</div></div>
+
+    <!-- ===== Spatial Design Workspace toolbar (single-screen, additive) ===== -->
+    <div class="ws-toolbar" role="toolbar" aria-label="Workspace">
+      <span class="ws-title">Spatial Workspace</span>
+      <button class="ws-tb" data-ws-mode="select" aria-pressed="true" type="button">Select</button>
+      <button class="ws-tb" data-ws-mode="draw" aria-pressed="false" type="button">Draw Polygon</button>
+      <button class="ws-tb" data-ws-mode="add" aria-pressed="false" type="button">Add Element</button>
+      <button class="ws-tb" data-ws-mode="move" aria-pressed="false" type="button">Move</button>
+      <button class="ws-tb" data-ws-mode="notes" aria-pressed="false" type="button">Notes</button>
+      <span class="ws-sep"></span>
+      <button class="ws-tb" id="wsExportWorkspace" type="button" title="Export spatial-workspace.json">Export</button>
+      <label class="ws-tb" for="wsImport" style="cursor:pointer">Import<input type="file" id="wsImport" accept="application/json,.json" hidden></label>
+    </div>
+
+    <!-- element palette (Add Element mode) -->
+    <div class="ws-palette" id="wsPalette" style="display:none">
+      <div class="ws-palhd">Elementos arrastrables · clic en el mapa para colocar</div>
+      <div id="wsPaletteList"></div>
+    </div>
+    <!-- notes category bar (Notes mode) -->
+    <div class="ws-notebar" id="wsNoteBar" style="display:none">
+      <span>Nota / satellite-assist:</span>
+      <select id="wsNoteCat"></select>
+      <span class="ws-hint">Clic en el mapa para anotar (árbol, borde, acceso, sombra…). Preliminar.</span>
+    </div>
+
+    <!-- properties + extra exports panel -->
+    <div class="ws-bottom">
+      <div class="ws-props" id="wsProps"><p class="ws-hint">Selecciona un elemento para ver/editar sus propiedades.</p></div>
+      <div class="ws-side">
+        <p class="ws-status" id="wsStatus">Workspace listo · PRELIMINAR</p>
+        <div class="ws-exports">
+          <button class="ws-b" id="wsExportPolygons" type="button">polygons.json</button>
+          <button class="ws-b" id="wsExportElements" type="button">elements.json</button>
+          <button class="ws-b" id="wsExportConstraints" type="button">constraint-report.json</button>
+          <button class="ws-b" id="wsExportNotes" type="button">notes.json</button>
+        </div>
+        <p class="ws-hint">Map Calibration = <b>fuente editable principal</b> · layout-map = presentación
+          planimétrica secundaria · 3D = visualización derivada.</p>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -320,6 +408,10 @@
 <!-- ADDITIVE: Terrain Intelligence + Spatial Constraint Engine. Reads vendorized
      terrain/spatial JSON + the read-only layout handle; does NOT alter calibration. -->
 <script src="terrain-spatial.js"></script>
+<!-- ADDITIVE: Spatial Design Workspace (toolbar, element editor, notes, satellite,
+     constraint validation, exports). Consumes the read-only MapCalibration + KairosLayout
+     handles; does NOT alter calibration logic. -->
+<script src="workspace.js"></script>
 <script>
   /* Loading overlay control — presentation only; observes the coords panel that the
      map already updates ("Cargando lot.json…" → coordinates). Does NOT touch map logic. */

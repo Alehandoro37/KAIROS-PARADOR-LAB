@@ -62,6 +62,8 @@ const required = [
   'layout-map/index.html', 'web/js/layout-map.js', 'data/layout/container-layout.json',
   // Map-Based Layout Calibration (editable polygons module + geo seed, on Map Calibration)
   'geometry-engine/map-calibration/layout-editor.js', 'data/calibration/layout-polygons.seed.json',
+  // Spatial Design Workspace (editable core: toolbar + element editor + notes + satellite)
+  'geometry-engine/map-calibration/workspace.js',
   // Terrain Intelligence + Spatial Constraint Engine (module + vendorized terrain + spatial data)
   'geometry-engine/map-calibration/terrain-spatial.js',
   'data/terrain/terrain-profile.json', 'data/terrain/slope-zones.json',
@@ -270,6 +272,30 @@ if (existsSync(tsPath)) {
   /window\.MapCalibration/.test(TS) ? ok('terrain-spatial: uses read-only MapCalibration handle') : fail('terrain-spatial: does not use MapCalibration handle');
   !/open-elevation|api\.open|https?:\/\/[^"']*elevation/i.test(TS) ? ok('terrain-spatial: no runtime elevation network (vendorized)') : fail('terrain-spatial: runtime elevation network call detected');
   !/lot\.json/.test(TS) ? ok('terrain-spatial: does not touch lot.json') : fail('terrain-spatial: references lot.json');
+}
+
+// Spatial Design Workspace — editable core (single screen): toolbar, element editor,
+// notes, ESRI satellite (no key/no Google), live validation, localStorage, exports.
+if (existsSync(mcPath)) {
+  const W = readFileSync(mcPath, 'utf8'), Wn = W.replace(/\s+/g, ' ');
+  /src=["']workspace\.js["']/i.test(W) ? ok('workspace: workspace.js wired (additive)') : fail('workspace: workspace.js not referenced');
+  (/data-ws-mode=["']select["']/.test(W) && /data-ws-mode=["']draw["']/.test(W) && /data-ws-mode=["']add["']/.test(W) && /data-ws-mode=["']move["']/.test(W) && /data-ws-mode=["']notes["']/.test(W)) ? ok('workspace: single-screen toolbar modes (Select/Draw/Add/Move/Notes)') : fail('workspace: missing toolbar modes');
+  /<option value=["']satellite["']/.test(W) ? ok('workspace: satellite basemap option (ESRI, no key)') : fail('workspace: missing satellite basemap option');
+  (/id=["']wsPalette["']/.test(W) && /id=["']wsProps["']/.test(W)) ? ok('workspace: element palette + properties panel') : fail('workspace: missing element/properties UI');
+  (/id=["']wsExportWorkspace["']/.test(W) && /id=["']wsImport["']/.test(W)) ? ok('workspace: export + import controls') : fail('workspace: missing export/import');
+  /fuente editable principal/i.test(Wn) && /presentaci[oó]n planim[eé]trica secundaria/i.test(Wn) && /visualizaci[oó]n derivada/i.test(Wn) ? ok('workspace: roles (editable core · planimetric secondary · derived 3D)') : fail('workspace: missing source-of-truth roles text');
+}
+const wsPath = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
+if (existsSync(wsPath)) {
+  const WJ = readFileSync(wsPath, 'utf8');
+  /window\.MapCalibration/.test(WJ) && /window\.KairosLayout/.test(WJ) ? ok('workspace.js: uses read-only handles (no calibration edit)') : fail('workspace.js: missing read-only handles');
+  (/World_Imagery|arcgisonline/.test(WJ)) ? ok('workspace.js: ESRI World Imagery satellite (no key)') : fail('workspace.js: missing satellite layer');
+  !/(maps\.googleapis|google\.maps|AIza|key=)/i.test(WJ) ? ok('workspace.js: no Google Maps / no API key') : fail('workspace.js: Google Maps / API key reference');
+  (/localStorage/.test(WJ) && /kairos\.elements\.v1/.test(WJ) && /kairos\.notes\.v1/.test(WJ)) ? ok('workspace.js: localStorage persistence (elements + notes)') : fail('workspace.js: missing localStorage persistence');
+  (/spatial-workspace\/v1/.test(WJ) && /constraint-report\/v1/.test(WJ) && /kairos\.elements\/v1/.test(WJ) && /kairos\.notes\/v1/.test(WJ)) ? ok('workspace.js: exports (workspace/polygons/elements/constraints/notes)') : fail('workspace.js: missing export schemas');
+  (/addElementAt/.test(WJ) && /rotation/.test(WJ) && /validate\(/.test(WJ)) ? ok('workspace.js: element editor (add/drag/rotate) + live validation') : fail('workspace.js: missing element editor/validation');
+  (/three_d_prep/.test(WJ) && /element_volumes/.test(WJ) && /camera_anchors/.test(WJ)) ? ok('workspace.js: 3D-preview prep (volumes/terrain/anchors/flags)') : fail('workspace.js: missing 3D-prep export');
+  !/lot\.json/.test(WJ) ? ok('workspace.js: does not touch lot.json') : fail('workspace.js: references lot.json');
 }
 // vendorized terrain profile — schema, status, disclaimer, real grid
 const tpPath = join(BASE, 'data', 'terrain', 'terrain-profile.json');
