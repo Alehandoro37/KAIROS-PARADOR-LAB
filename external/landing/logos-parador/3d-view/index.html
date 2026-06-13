@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D View — Logos Parador · volumen espacial conceptual</title>
+  <meta name="description" content="Capa 3D conceptual ligera de Logos Parador (Guacarí): terreno aproximado, volúmenes de contenedores, decks, árboles y anclas de cámara. Three.js local, sin CDN. Preliminar.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../assets/logo.jpg">
+  <meta name="theme-color" content="#06151f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="3D View — Logos Parador">
+  <meta property="og:description" content="Volumen espacial conceptual de Logos Parador. Modelo 3D conceptual basado en elevación aproximada — no sustituye topografía.">
+  <meta property="og:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
+  <link rel="stylesheet" href="../web/css/experience-system.css">
+  <style>
+    .v-stage{position:relative;max-width:1180px;margin:14px auto 0;height:clamp(420px,74vh,780px);
+      border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow);
+      background:radial-gradient(120% 80% at 80% -10%,rgba(23,86,92,.25),rgba(6,20,29,.6) 60%),#05101a}
+    #vCanvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+    #vCanvas:active{cursor:grabbing}
+    /* discreet control panel */
+    .v-panel{position:absolute;left:14px;top:14px;z-index:6;width:248px;max-width:calc(100% - 28px);
+      background:rgba(3,16,29,.84);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--r-lg);
+      padding:14px;font:12px var(--mono);color:#cbe7ef;max-height:calc(100% - 28px);overflow:auto}
+    .v-panel h4{margin:0 0 8px;color:var(--gold);font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+    .v-panel .grp{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid rgba(143,229,255,.1)}
+    .v-panel label{display:flex;align-items:center;gap:7px;margin:5px 0;color:#bfe0e8;cursor:pointer}
+    .v-panel input[type=range]{width:100%}
+    .vbtn,.v-panel .act{border:1px solid rgba(143,229,255,.28);background:rgba(255,255,255,.04);color:#eaf6ff;
+      border-radius:999px;padding:7px 11px;font:600 11px var(--mono);cursor:pointer;transition:.15s}
+    .vbtn:hover,.v-panel .act:hover{border-color:var(--gold);color:#fff}
+    #vCams{display:flex;flex-wrap:wrap;gap:5px}
+    .v-actrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .v-status{font:10px var(--mono);color:#9cc6dd;line-height:1.5;margin-top:6px}
+    .v-cbanner{position:absolute;right:14px;bottom:12px;z-index:5;font:600 10px var(--mono);letter-spacing:.12em;
+      text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid var(--border-gold);
+      border-radius:999px;padding:5px 11px;backdrop-filter:blur(6px)}
+    /* WebGL fallback (no broken screen) */
+    .v-fallback{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:30px;z-index:7;
+      background:rgba(6,20,29,.96);color:var(--muted)}
+    .v-fallback .card{max-width:460px}
+    .v-fallback h3{color:var(--ink);font-size:20px;margin:0 0 10px}
+    .v-fallback p{font-size:14px;line-height:1.6}
+    @media(max-width:760px){
+      .topbar nav{display:none}
+      .v-stage{height:clamp(360px,66vh,640px);margin-top:8px;border-radius:var(--r-lg)}
+      .v-panel{width:calc(100% - 24px);left:12px;top:auto;bottom:12px;max-height:46%}
+      .vbtn,.v-panel .act{padding:9px 13px;font-size:12px}
+    }
+  </style>
+</head>
+<body class="xp">
+
+  <div class="topbar">
+    <a class="brand" href="../" aria-label="Logos Parador — inicio">
+      <img class="brandlogo" src="../assets/logo.jpg" alt="Logos Parador · Kairos" width="42" height="40" decoding="async">
+      <span>Logos Parador</span>
+    </a>
+    <nav aria-label="Navegación pública">
+      <a href="../">Inicio</a>
+      <a href="../masterplan/">Masterplan</a>
+      <a href="../journey/">Journey</a>
+      <a href="../map/">Mapa</a>
+      <a href="../layout-map/">Layout</a>
+      <a href="../investment/">Investment</a>
+      <a href="../technical-roadmap/">Técnica</a>
+      <a href="./" aria-current="page">3D</a>
+    </nav>
+  </div>
+  <div class="pbanner">Conceptual spatial 3D · Logos Parador</div>
+
+  <div class="disc" role="note">
+    <span><b>Modelo 3D conceptual basado en elevación aproximada. No sustituye topografía.</b>
+    Visualización preliminar — no reemplaza estudios de suelos, ingeniería, arquitectura, licencias ni validación legal/catastral.</span>
+  </div>
+
+  <header class="hero" style="padding-bottom:6px">
+    <span class="kicker"><span class="pin"></span>Conceptual Spatial 3D · ligero</span>
+    <h1>Logos Parador en volumen</h1>
+    <p class="lede">Una capa <b>3D conceptual</b> que reutiliza el <b>mismo</b> terreno, polígonos, zonas,
+      contenedores y árboles del <a href="../map/" style="color:var(--gold)">Spatial Source of Truth</a> —
+      navegable, sin inventar otra maqueta. <b>Three.js local, sin CDN.</b></p>
+  </header>
+
+  <div class="v-stage">
+    <canvas id="vCanvas" aria-label="Vista 3D conceptual de Logos Parador"></canvas>
+
+    <div class="v-panel" aria-label="Controles 3D">
+      <div class="grp">
+        <h4>Capas</h4>
+        <label><input type="checkbox" id="vTerrain" checked> Terreno (elevación aprox.)</label>
+        <label><input type="checkbox" id="vContainers" checked> Contenedores / volúmenes</label>
+        <label><input type="checkbox" id="vTrees" checked> Árboles (conservar/evaluar/retirar)</label>
+        <label><input type="checkbox" id="vZones" checked> Zonas + restricciones</label>
+      </div>
+      <div class="grp">
+        <h4>Fases</h4>
+        <label><input type="checkbox" id="vF1" checked> Fase 1</label>
+        <label><input type="checkbox" id="vF2" checked> Fase 2</label>
+        <label><input type="checkbox" id="vF3" checked> Fase 3 (reserva)</label>
+      </div>
+      <div class="grp">
+        <h4>Terrain exaggeration <output id="vExagOut">6×</output></h4>
+        <input type="range" id="vExag" min="1" max="14" step="1" value="6">
+        <p class="v-status">Relieve real bajo (~10 m); se exagera sutilmente para lectura. Conceptual.</p>
+      </div>
+      <div class="grp">
+        <h4>Cámara</h4>
+        <div id="vCams"></div>
+        <div class="v-actrow"><button class="act" id="vReset" type="button">Reset / Top</button></div>
+      </div>
+      <div class="grp" style="border-bottom:0">
+        <h4>Export</h4>
+        <div class="v-actrow">
+          <button class="act" id="vExportScene" type="button">Scene JSON</button>
+          <button class="act" id="vExportPng" type="button">PNG</button>
+        </div>
+        <p class="v-status" id="vStatus">—</p>
+        <p class="v-status" id="vStatus2">Inicializando 3D…</p>
+      </div>
+    </div>
+
+    <div class="v-cbanner">Conceptual · volumen 3D</div>
+
+    <div class="v-fallback" id="vFallback">
+      <div class="card">
+        <h3>3D no disponible en este dispositivo</h3>
+        <p>Tu navegador no reporta <b>WebGL</b> (o está deshabilitado). La vista 3D es <b>opcional</b>: la
+          fuente espacial principal sigue siendo <a href="../map/" style="color:var(--gold);font-weight:700">Map Calibration</a>
+          (2D, sobre el mapa real) y el <a href="../layout-map/" style="color:var(--gold)">layout</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="arch">
+      <hr class="landscape-rule" style="margin-bottom:24px">
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p><b>Modelo 3D conceptual.</b> Terreno por elevación aproximada (SRTM vendorizado), volúmenes y
+          alturas ilustrativos. No es topografía, ingeniería ni arquitectura. La verdad espacial está en
+          <a href="../map/" style="color:var(--gold);font-weight:700">Map Calibration</a>.</p>
+      </div>
+      <nav class="cta">
+        <a class="btn primary" href="../map/">Map Calibration (fuente)</a>
+        <a class="btn" href="../layout-map/">Layout</a>
+        <a class="btn" href="../technical-roadmap/">Guía técnica</a>
+      </nav>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p class="brandline">KAIROS PARADOR — Logos Parador · Guacarí</p>
+      <p class="legal"><b>Modelo 3D conceptual basado en elevación aproximada. No sustituye topografía,
+        estudios de suelos, ingeniería, arquitectura, licencias ni validación legal o catastral.</b>
+        Three.js vendorizado local (sin CDN). Fuente de datos: <code>data/terrain/</code>,
+        <code>data/spatial/</code>, <code>data/layout/</code>, <code>data/calibration/</code> (conceptual).</p>
+    </div>
+  </footer>
+
+  <nav class="mobnav" aria-label="Navegación móvil">
+    <a href="../"><span class="mi">●</span>Inicio</a>
+    <a href="../map/"><span class="mi">⌖</span>Mapa</a>
+    <a href="../layout-map/"><span class="mi">▦</span>Layout</a>
+    <a href="../technical-roadmap/"><span class="mi">⚙</span>Técnica</a>
+    <a href="./" aria-current="page"><span class="mi">◈</span>3D</a>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

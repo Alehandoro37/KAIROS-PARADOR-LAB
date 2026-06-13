@@ -65,7 +65,9 @@ const required = [
   // Terrain Intelligence + Spatial Constraint Engine (module + vendorized terrain + spatial data)
   'geometry-engine/map-calibration/terrain-spatial.js',
   'data/terrain/terrain-profile.json', 'data/terrain/slope-zones.json',
-  'data/spatial/spatial-zones.json', 'data/spatial/vegetation-strategy.json', 'data/spatial/material-strategy.json'
+  'data/spatial/spatial-zones.json', 'data/spatial/vegetation-strategy.json', 'data/spatial/material-strategy.json',
+  // Conceptual Spatial 3D Layer (vendorized Three.js + scene module)
+  '3d-view/index.html', '3d-view/app.js', '3d-view/vendor/three/three.module.min.js'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
@@ -329,6 +331,51 @@ if (existsSync(mtPath)) {
   }
 }
 
+// Conceptual Spatial 3D Layer — vendorized Three.js (no CDN) + scene reusing spatial data
+const v3Path = join(BASE, '3d-view', 'index.html');
+if (!existsSync(v3Path)) { fail('missing 3d-view route'); }
+else {
+  const V = readFileSync(v3Path, 'utf8'), Vn = V.replace(/\s+/g, ' ');
+  /http-equiv=["']refresh/i.test(V) ? fail('3d-view is a redirect, expected the 3D page') : ok('3d-view present (not a redirect)');
+  /Modelo 3D conceptual basado en elevaci[oó]n aproximada\. No sustituye topograf[ií]a/i.test(Vn) ? ok('3d-view: prominent 3D/terrain disclaimer') : fail('3d-view: missing 3D disclaimer');
+  /<script[^>]+type=["']module["'][^>]+src=["']app\.js["']/i.test(V) ? ok('3d-view: ES-module scene (app.js)') : fail('3d-view: app.js module not referenced');
+  /id=["']vCanvas["']/.test(V) ? ok('3d-view: canvas stage') : fail('3d-view: missing canvas');
+  /id=["']vFallback["']/.test(V) ? ok('3d-view: WebGL fallback element') : fail('3d-view: missing WebGL fallback');
+  /id=["']vCams["']/.test(V) ? ok('3d-view: camera anchor controls') : fail('3d-view: missing camera controls');
+  /id=["']vExag["']/.test(V) ? ok('3d-view: terrain exaggeration control') : fail('3d-view: missing terrain exaggeration');
+  (/id=["']vTerrain["']/.test(V) && /id=["']vContainers["']/.test(V) && /id=["']vTrees["']/.test(V) && /id=["']vZones["']/.test(V)) ? ok('3d-view: layer toggles (terrain/containers/trees/zones)') : fail('3d-view: missing layer toggles');
+  // NO CDN anywhere on the page (match real CDN hosts, not prose like "sin CDN")
+  !/(cdn\.jsdelivr|unpkg\.com|cdnjs\.cloudflare|ajax\.googleapis|fonts\.googleapis|esm\.sh|skypack\.dev|\/\/cdn\.)/i.test(V) ? ok('3d-view: no CDN references') : fail('3d-view: CDN reference found');
+}
+// vendored Three.js must be LOCAL and present (no CDN), and a real ESM build
+const threePath = join(BASE, '3d-view', 'vendor', 'three', 'three.module.min.js');
+if (!existsSync(threePath)) { fail('missing vendored Three.js (3d-view/vendor/three/three.module.min.js)'); }
+else {
+  const T3 = readFileSync(threePath, 'utf8');
+  /\bexport\s*\{/.test(T3) ? ok('three.js: local ESM build (export block)') : fail('three.js: not an ESM build');
+  statSync(threePath).size > 100000 ? ok(`three.js: vendored locally (${Math.round(statSync(threePath).size / 1024)} KB)`) : fail('three.js: vendored file too small');
+}
+// app.js — imports LOCAL three (no CDN), reuses spatial data, no lot.json write
+const appPath = join(BASE, '3d-view', 'app.js');
+if (existsSync(appPath)) {
+  const A = readFileSync(appPath, 'utf8');
+  /import \* as THREE from ["']\.\/vendor\/three\/three\.module\.min\.js["']/.test(A) ? ok('3d-view app: imports LOCAL three (vendored, no CDN)') : fail('3d-view app: does not import local three');
+  !/(cdn\.|unpkg\.com|jsdelivr|cdnjs|googleapis|esm\.sh|skypack|https?:\/\/[^"']*three)/i.test(A) ? ok('3d-view app: no CDN/external three') : fail('3d-view app: external three reference');
+  (/terrain\/terrain-profile\.json/.test(A) && /spatial\/spatial-zones\.json/.test(A)) ? ok('3d-view app: loads terrain + spatial data (reuses existing)') : fail('3d-view app: does not load terrain/spatial data');
+  /camera_anchors/.test(A) ? ok('3d-view app: uses camera anchors') : fail('3d-view app: missing camera anchors');
+  /volume/.test(A) ? ok('3d-view app: container volumes (height placeholders)') : fail('3d-view app: missing container volumes');
+  !/lot\.json/.test(A) ? ok('3d-view app: does not touch lot.json') : fail('3d-view app: references lot.json');
+}
+// cross-navigation: every public page links to /3d-view/ (and the new page links back)
+[['index.html', './3d-view/'], ['geometry-engine/masterplan/index.html', '../../3d-view/'],
+ ['geometry-engine/map-calibration/index.html', '../../3d-view/'], ['investment/index.html', '../3d-view/'],
+ ['technical-roadmap/index.html', '../3d-view/'], ['layout-map/index.html', '../3d-view/'],
+ ['3d-view/index.html', '../map/']
+].forEach(([f, href]) => {
+  const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
+  readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → ${href}`) : fail(`cross-nav: ${f} missing link (${href})`);
+});
+
 // public landing (commercial entry) — root index.html
 const landingPath = join(BASE, 'index.html');
 if (!existsSync(landingPath)) { fail('missing public landing: index.html'); }
@@ -369,7 +416,7 @@ for (const [f, target] of Object.entries(redirects)) {
 // content scans (skip vendored Leaflet + docs prose)
 const TEXT = new Set(['.html', '.js', '.mjs', '.css', '.json']);
 function walk(d) { let out = []; for (const n of readdirSync(d)) { const p = join(d, n); statSync(p).isDirectory() ? out = out.concat(walk(p)) : out.push(p); } return out; }
-const scan = walk(BASE).filter(f => TEXT.has(extname(f)) && !f.includes(`${'/vendor/leaflet/'}`));
+const scan = walk(BASE).filter(f => TEXT.has(extname(f)) && !f.includes('/vendor/leaflet/') && !f.includes('/vendor/three/'));
 const patterns = [
   { name: 'no absolute src/href ("/…")', re: /(?:src|href)\s*=\s*["']\/(?!\/)/ },
   { name: 'no absolute fetch("/…")', re: /\bfetch\(\s*["']\/(?!\/)/ },
