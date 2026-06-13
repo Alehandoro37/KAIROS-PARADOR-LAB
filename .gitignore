@@ -24,4 +24,11 @@ layout-export-*.json
 # ---- Build externo (generado por `npm run build:external`, no versionar) ----
 build/
 
+# ---- Firebase: artefactos LOCALES de deploy (cache, logs) — NO versionar ----
+# NOTA: firebase.json y .firebaserc NO se ignoran (config versionable, queda visible).
+.firebase/
+.firebase/**
+firebase-debug.log*
+firebaserc.local
+
 # NOTA: data/ y web/assets/renders/ SÍ se versionan (son fuentes del lab, no artefactos).
