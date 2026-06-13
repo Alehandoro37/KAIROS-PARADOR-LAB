@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layout Map — Logos Parador · maqueta planimétrica conceptual</title>
+  <meta name="description" content="Maqueta planimétrica conceptual de Logos Parador (Guacarí): implantación de contenedores, pabellones, plaza, parqueo, senderos y servicios dentro del lote. Vista superior con zoom y niveles de detalle. Preliminar.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="apple-touch-icon" href="../assets/logo.jpg">
+  <meta name="theme-color" content="#06151f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Layout Map — Logos Parador">
+  <meta property="og:description" content="Maqueta planimétrica conceptual de la implantación de Logos Parador. Preliminar — no reemplaza planos arquitectónicos ni topografía.">
+  <meta property="og:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
+  <link rel="stylesheet" href="../web/css/experience-system.css">
+  <style>
+    /* Page-local: planimetric stage, controls, info panel (system from experience-system.css). */
+    .lm-shell{max-width:1180px;margin:0 auto;padding:18px 20px 0}
+    .lm-stage{position:relative;border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;
+      background:
+        radial-gradient(120% 80% at 80% -10%,rgba(23,86,92,.22),rgba(6,20,29,.5) 60%),
+        linear-gradient(180deg,#081a24,#05101a);
+      box-shadow:var(--shadow)}
+    #lmStage{display:block;width:100%;height:min(72vh,760px);touch-action:none;cursor:grab}
+    #lmStage.grab{cursor:grabbing}
+    /* svg text */
+    #lmStage text{font-family:var(--mono)}
+    .lm-zone{fill:#bfe0e8;font-size:15px;font-weight:600;text-anchor:middle;letter-spacing:.04em;paint-order:stroke;stroke:#05101a;stroke-width:3px}
+    .lm-mlbl{fill:#f5fcff;font-size:11px;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#05101a;stroke-width:2.5px}
+    .lm-mod{cursor:pointer;transition:filter .15s}
+    .lm-mod:hover,.lm-mod:focus{outline:none}
+    .lm-mod:hover rect:first-of-type,.lm-mod.sel rect:first-of-type{stroke-width:3}
+    .lm-mod.sel rect:first-of-type{filter:drop-shadow(0 0 6px rgba(231,177,90,.6))}
+    /* floating controls */
+    .lm-zoom{position:absolute;right:16px;top:16px;display:flex;flex-direction:column;gap:8px;z-index:6}
+    .lm-zoom button{width:44px;height:44px;border-radius:13px;border:1px solid rgba(143,229,255,.28);
+      background:rgba(3,16,29,.84);color:#eaf6ff;font:600 19px var(--mono);cursor:pointer;backdrop-filter:blur(8px);
+      box-shadow:0 6px 18px rgba(0,0,0,.32);transition:.15s}
+    .lm-zoom button:hover{border-color:var(--gold);color:#fff;transform:translateY(-1px)}
+    .lm-zoom .rst{font-size:13px}
+    .lm-levels{position:absolute;left:16px;top:16px;z-index:6;display:flex;gap:6px;padding:5px;border-radius:var(--r-pill);
+      background:rgba(3,16,29,.8);border:1px solid var(--border);backdrop-filter:blur(8px)}
+    .lm-levels button{border:0;background:transparent;color:var(--muted);font:700 12px var(--mono);letter-spacing:.04em;
+      padding:8px 13px;border-radius:var(--r-pill);cursor:pointer;transition:.15s}
+    .lm-levels button[aria-pressed="true"]{background:linear-gradient(120deg,var(--gold),var(--gold-2));color:#10241f}
+    .lm-cbanner{position:absolute;left:16px;bottom:14px;z-index:5;font:600 10px var(--mono);letter-spacing:.14em;
+      text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid var(--border-gold);
+      border-radius:var(--r-pill);padding:6px 12px;backdrop-filter:blur(6px)}
+    /* legend */
+    .lm-legend{position:absolute;right:16px;bottom:14px;z-index:5;display:flex;flex-wrap:wrap;gap:6px 12px;max-width:60%;
+      justify-content:flex-end;background:rgba(3,16,29,.7);border:1px solid var(--border);border-radius:var(--r-md);
+      padding:9px 12px;backdrop-filter:blur(8px)}
+    .lm-legend span{display:inline-flex;align-items:center;gap:6px;font:600 10.5px var(--mono);color:#cbe7ef}
+    .lm-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.3)}
+    /* bottom panel */
+    .lm-panel{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin:16px 0 0}
+    .lm-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;min-height:120px}
+    .lm-note{color:var(--soft);font-size:13px}
+    .lm-info-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .lm-info-h b{font-size:17px;font-weight:800}
+    .lm-info-dl{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin:0}
+    .lm-info-dl div{border-bottom:1px solid rgba(143,229,255,.1);padding-bottom:6px}
+    .lm-info-dl dt{font:700 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:0}
+    .lm-info-dl dd{margin:3px 0 0;color:var(--ink);font-size:14px}
+    .lm-side{display:flex;flex-direction:column;gap:12px}
+    .lm-meta{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px}
+    .lm-meta p{margin:0 0 4px;color:var(--soft);font-size:12.5px}
+    .lm-meta .levelnote{color:var(--muted);font-size:13px;font-weight:600}
+    .lm-export{display:flex;flex-wrap:wrap;gap:10px}
+    .lm-export .btn{padding:11px 16px;font-size:13px}
+    @media(max-width:760px){
+      .lm-shell{padding:12px 12px 0}
+      #lmStage{height:62vh}
+      .lm-zoom button{width:48px;height:48px}
+      .lm-legend{display:none}
+      .lm-levels{left:50%;transform:translateX(-50%);top:auto;bottom:14px}
+      .lm-cbanner{display:none}
+      .lm-panel{grid-template-columns:1fr}
+      .lm-info-dl{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body class="xp">
+
+  <!-- ===================== PUBLIC NAV + BANNER ===================== -->
+  <div class="topbar">
+    <a class="brand" href="../" aria-label="Logos Parador — inicio">
+      <img class="brandlogo" src="../assets/logo.jpg" alt="Logos Parador · Kairos" width="42" height="40" decoding="async">
+      <span>Logos Parador</span>
+    </a>
+    <nav aria-label="Navegación pública">
+      <a href="../">Inicio</a>
+      <a href="../masterplan/">Masterplan</a>
+      <a href="../journey/">Journey</a>
+      <a href="../map/">Mapa</a>
+      <a href="../investment/">Investment</a>
+      <a href="../technical-roadmap/">Técnica</a>
+      <a href="./" aria-current="page">Layout</a>
+    </nav>
+  </div>
+  <div class="pbanner">Conceptual site-layout model · Logos Parador</div>
+
+  <!-- PROMINENT, NON-BURIED DISCLAIMER -->
+  <div class="disc" role="note">
+    <span><b>Maqueta conceptual preliminar.</b> No reemplaza planos arquitectónicos, topografía,
+    licencias ni diseño constructivo.</span>
+  </div>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <span class="kicker"><span class="pin"></span>Layout Map · maqueta planimétrica</span>
+    <h1>Implantación del parador,<br>vista en planta</h1>
+    <p class="lede">Una <b>maqueta planimétrica conceptual</b> de cómo se acomodan los <b>contenedores,
+      pabellones, plaza, parqueo, senderos y servicios</b> dentro del lote. Vista superior con
+      <b>zoom, paneo y tres niveles de detalle</b> — lo que el masterplan, el journey y el mapa no
+      muestran con precisión de plano.</p>
+  </header>
+
+  <!-- ===================== STAGE ===================== -->
+  <div class="lm-shell">
+    <div class="lm-stage">
+      <svg id="lmStage" viewBox="0 0 1000 1500" role="img"
+           aria-label="Maqueta planimétrica conceptual de la implantación de Logos Parador"></svg>
+
+      <div class="lm-levels" role="group" aria-label="Nivel de detalle">
+        <button type="button" data-setlevel="1" aria-pressed="true">Nivel 1</button>
+        <button type="button" data-setlevel="2" aria-pressed="false">Nivel 2</button>
+        <button type="button" data-setlevel="3" aria-pressed="false">Nivel 3</button>
+      </div>
+
+      <div class="lm-zoom" role="group" aria-label="Controles de zoom">
+        <button id="lmZoomIn" type="button" title="Zoom +" aria-label="Acercar">+</button>
+        <button id="lmZoomOut" type="button" title="Zoom −" aria-label="Alejar">−</button>
+        <button id="lmZoomReset" class="rst" type="button" title="Reset" aria-label="Reset vista">⤢</button>
+      </div>
+
+      <div class="lm-cbanner">Conceptual · vista en planta</div>
+
+      <div class="lm-legend" aria-label="Leyenda de módulos">
+        <span><i style="background:#e7b15a"></i>Café / contenedor</span>
+        <span><i style="background:#e8a25c"></i>Cocina</span>
+        <span><i style="background:#8fe5ff"></i>Bar</span>
+        <span><i style="background:#5fc08a"></i>Retail</span>
+        <span><i style="background:#3f8f63"></i>Deck / sombra</span>
+        <span><i style="background:#9fb0b8"></i>Baños</span>
+        <span><i style="background:#94b8b2"></i>Servicios</span>
+        <span><i style="background:#b07a4a"></i>Pabellón</span>
+      </div>
+    </div>
+
+    <!-- bottom panel -->
+    <div class="lm-panel">
+      <div class="lm-info" id="lmInfo">
+        <p class="lm-note">Toca o haz clic en un <b>módulo</b> para ver su tipo, dimensión conceptual,
+          orientación y fase. Usa <b>Nivel 1–3</b> para mostrar más detalle y los controles de
+          <b>zoom / paneo</b> para explorar.</p>
+      </div>
+      <div class="lm-side">
+        <div class="lm-meta">
+          <p class="levelnote" id="lmLevelNote">Nivel 1 · Lote + zonas principales</p>
+          <p id="lmStatus">Cargando maqueta…</p>
+          <p>Vista en planta conceptual; la geometría real del lote vive en <b>data/lot.json</b> y se ve
+            en el <a class="more" style="color:var(--gold)" href="../map/">mapa</a>.</p>
+        </div>
+        <div class="lm-export">
+          <button class="btn" id="lmExportJson" type="button">Export JSON</button>
+          <button class="btn" id="lmExportSvg" type="button">Export SVG</button>
+          <button class="btn" id="lmExportPng" type="button">Export PNG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="arch">
+      <hr class="landscape-rule" style="margin-bottom:24px">
+      <div class="callout warn">
+        <span class="ico">⚠️</span>
+        <p><b>Maqueta conceptual.</b> Dimensiones, posiciones y cantidades son ilustrativas. El diseño real
+          exige planos arquitectónicos, topografía, estudios técnicos y licencias.</p>
+      </div>
+      <div class="callout">
+        <span class="ico">🧭</span>
+        <p>Esta vista es <b>independiente del mapa OSM</b>: la maqueta no se superpone a la cartografía
+          geográfica para no confundir el plano conceptual con el contexto real.</p>
+      </div>
+      <nav class="cta">
+        <a class="btn primary" href="../technical-roadmap/">Ver guía técnica</a>
+        <a class="btn" href="../masterplan/">Ver masterplan</a>
+        <a class="btn" href="../map/">Ver mapa</a>
+      </nav>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER / DISCLAIMER ===================== -->
+  <footer>
+    <div class="wrap">
+      <p class="brandline">KAIROS PARADOR — Logos Parador · Guacarí</p>
+      <p class="legal"><b>Maqueta conceptual preliminar. No reemplaza planos arquitectónicos, topografía,
+        licencias ni diseño constructivo.</b> Implantación ilustrativa de módulos y zonas. Fuente:
+        <code>data/layout/container-layout.json</code> (valores conceptuales). Contexto cartográfico
+        © OpenStreetMap contributors.</p>
+    </div>
+  </footer>
+
+  <!-- ===================== MOBILE BOTTOM NAV ===================== -->
+  <nav class="mobnav" aria-label="Navegación móvil">
+    <a href="../"><span class="mi">●</span>Inicio</a>
+    <a href="../masterplan/"><span class="mi">◫</span>Plan</a>
+    <a href="../map/"><span class="mi">⌖</span>Mapa</a>
+    <a href="../technical-roadmap/"><span class="mi">⚙</span>Técnica</a>
+    <a href="./" aria-current="page"><span class="mi">▦</span>Layout</a>
+  </nav>
+
+  <script src="../web/js/layout-map.js" defer></script>
+</body>
+</html>

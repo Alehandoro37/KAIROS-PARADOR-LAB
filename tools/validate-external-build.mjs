@@ -31,7 +31,7 @@ if (!existsSync(BASE)) { console.error(`✗ build missing — run \`npm run buil
 ok('build root exists: ' + relative(ROOT, BASE));
 
 // route directories
-['.', 'masterplan', 'map', 'journey', 'technical-roadmap', 'web', 'geometry-engine', 'data'].forEach(d => {
+['.', 'masterplan', 'map', 'journey', 'technical-roadmap', 'layout-map', 'web', 'geometry-engine', 'data'].forEach(d => {
   const p = join(BASE, d);
   (existsSync(p) && statSync(p).isDirectory()) ? ok('route dir: ' + (d === '.' ? '(root)' : d)) : fail('missing route dir: ' + d);
 });
@@ -57,7 +57,9 @@ const required = [
   'investment/index.html', 'web/js/investment-dashboard.js',
   'data/business/operational-model.json', 'data/business/phases.json', 'data/business/experience-economy.json',
   // Advanced Technical Roadmap (phased development guide + experience system CSS + versioned JSON)
-  'technical-roadmap/index.html', 'web/css/experience-system.css', 'data/technical-development-roadmap.json'
+  'technical-roadmap/index.html', 'web/css/experience-system.css', 'data/technical-development-roadmap.json',
+  // Detailed Container Layout Map (architectural site-layout model + SVG renderer + versioned JSON)
+  'layout-map/index.html', 'web/js/layout-map.js', 'data/layout/container-layout.json'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
@@ -135,6 +137,57 @@ else {
 [['index.html', './technical-roadmap/'], ['geometry-engine/masterplan/index.html', '../../technical-roadmap/'],
  ['geometry-engine/map-calibration/index.html', '../../technical-roadmap/'], ['investment/index.html', '../technical-roadmap/'],
  ['technical-roadmap/index.html', '../investment/']
+].forEach(([f, href]) => {
+  const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
+  readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → ${href}`) : fail(`cross-nav: ${f} missing link (${href})`);
+});
+
+// Detailed Container Layout Map — planimetric site-layout route + content + exports + cross-nav
+const lmPath = join(BASE, 'layout-map', 'index.html');
+if (!existsSync(lmPath)) { fail('missing layout-map route'); }
+else {
+  const M = readFileSync(lmPath, 'utf8');
+  const Mn = M.replace(/\s+/g, ' '); // collapse whitespace so wrapped text still matches
+  /http-equiv=["']refresh/i.test(M) ? fail('layout-map is a redirect, expected the layout page') : ok('layout-map present (not a redirect)');
+  /Maqueta conceptual preliminar\. No reemplaza planos arquitect[oó]nicos, topograf[ií]a, licencias ni dise[ñn]o constructivo/i.test(Mn)
+    ? ok('layout-map: prominent disclaimer') : fail('layout-map: missing required disclaimer');
+  /href=["']\.\.\/web\/css\/experience-system\.css["']/i.test(M) ? ok('layout-map: experience-system.css reused') : fail('layout-map: missing experience-system.css');
+  /src=["']\.\.\/web\/js\/layout-map\.js["']/i.test(M) ? ok('layout-map: SVG renderer referenced') : fail('layout-map: missing layout-map.js');
+  /id=["']lmStage["']/.test(M) ? ok('layout-map: SVG stage container') : fail('layout-map: missing SVG stage');
+  (/id=["']lmZoomIn["']/.test(M) && /id=["']lmZoomOut["']/.test(M) && /id=["']lmZoomReset["']/.test(M)) ? ok('layout-map: zoom controls') : fail('layout-map: missing zoom controls');
+  (/data-setlevel=["']1["']/.test(M) && /data-setlevel=["']2["']/.test(M) && /data-setlevel=["']3["']/.test(M)) ? ok('layout-map: 3 detail levels') : fail('layout-map: missing detail levels');
+  (/id=["']lmExportJson["']/.test(M) && /id=["']lmExportSvg["']/.test(M) && /id=["']lmExportPng["']/.test(M)) ? ok('layout-map: export controls (JSON/SVG/PNG)') : fail('layout-map: missing export controls');
+}
+// versioned container-layout JSON — schema + container modules + required per-module fields + sections
+const lmJsonPath = join(BASE, 'data', 'layout', 'container-layout.json');
+if (!existsSync(lmJsonPath)) { fail('missing data/layout/container-layout.json'); }
+else {
+  let K = null;
+  try { K = JSON.parse(readFileSync(lmJsonPath, 'utf8')); } catch (e) { fail('container-layout JSON not valid JSON: ' + e.message); }
+  if (K) {
+    /^kairos\.container-layout\//.test(K.schema || '') ? ok('layout JSON: schema id') : fail('layout JSON: bad/missing schema id');
+    typeof K.version === 'string' ? ok('layout JSON: versioned (' + K.version + ')') : fail('layout JSON: missing version');
+    /No reemplaza planos arquitect[oó]nicos/i.test(K.disclaimer || '') ? ok('layout JSON: conceptual disclaimer') : fail('layout JSON: missing disclaimer');
+    ['modules', 'paths', 'parking', 'plazas', 'landscape', 'service_zones', 'labels', 'zoom_levels'].forEach(k =>
+      (k in K) ? ok('layout JSON: has ' + k) : fail('layout JSON: missing ' + k));
+    const mods = Array.isArray(K.modules) ? K.modules : [];
+    mods.length >= 6 ? ok(`layout JSON: ${mods.length} modules`) : fail(`layout JSON: too few modules (${mods.length})`);
+    const mfields = ['id', 'type', 'dim', 'orientation', 'phase', 'state'];
+    const badm = mods.filter(m => !mfields.every(k => k in m));
+    badm.length === 0 ? ok('layout JSON: every module has required fields') : fail(`layout JSON: ${badm.length} module(s) missing fields`);
+    mods.every(m => m.state === 'conceptual') ? ok('layout JSON: all modules state="conceptual"') : fail('layout JSON: a module is not conceptual');
+    // container module types present
+    const types = new Set(mods.map(m => m.type));
+    const wantTypes = ['container-cafe', 'cocina', 'bar', 'banos', 'retail-local', 'deck-sombra', 'service-module'];
+    const missingT = wantTypes.filter(t => !types.has(t));
+    missingT.length === 0 ? ok('layout JSON: container module types present') : fail('layout JSON: missing container types: ' + missingT.join(', '));
+    Array.isArray(K.zoom_levels) && K.zoom_levels.length === 3 ? ok('layout JSON: 3 zoom/detail levels') : fail('layout JSON: expected 3 zoom_levels');
+  }
+}
+// cross-navigation: every public page links to /layout-map/ (and the new page links back)
+[['index.html', './layout-map/'], ['geometry-engine/masterplan/index.html', '../../layout-map/'],
+ ['geometry-engine/map-calibration/index.html', '../../layout-map/'], ['investment/index.html', '../layout-map/'],
+ ['technical-roadmap/index.html', '../layout-map/'], ['layout-map/index.html', '../technical-roadmap/']
 ].forEach(([f, href]) => {
   const p = join(BASE, f); if (!existsSync(p)) { fail(`cross-nav: missing ${f}`); return; }
   readFileSync(p, 'utf8').includes(`href="${href}"`) ? ok(`cross-nav (${f.split('/')[0] || 'root'}) → ${href}`) : fail(`cross-nav: ${f} missing link (${href})`);

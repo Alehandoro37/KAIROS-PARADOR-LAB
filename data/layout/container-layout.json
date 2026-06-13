@@ -1,0 +1,84 @@
+{
+  "schema": "kairos.container-layout/v1",
+  "version": "1.0.0",
+  "status": "CONCEPTUAL — maqueta planimétrica ilustrativa. NO reemplaza planos arquitectónicos, topografía, licencias ni diseño constructivo.",
+  "site": {
+    "name": "Logos Parador",
+    "location": "Guacarí · Valle del Cauca · Colombia",
+    "geometry_reference": "data/lot.json (no se lee ni se modifica aquí; esta maqueta usa un polígono conceptual propio)",
+    "orientation_note": "Frente vial (Troncal de Occidente) al sur; corredor del Ferrocarril del Pacífico al costado oriental."
+  },
+  "viewBox": { "x": 0, "y": 0, "width": 1000, "height": 1500 },
+  "lot": {
+    "id": "lot",
+    "label": "Lote Logos",
+    "points": [[230,1380],[770,1330],[650,170],[300,250]],
+    "note": "Polígono conceptual de la maqueta (no es el lote georreferenciado)."
+  },
+  "context": {
+    "road": { "id": "troncal", "label": "Troncal de Occidente · Ruta 25", "d": "M40 1452 L960 1372", "width": 40 },
+    "rail": { "id": "ferrocarril", "label": "Ferrocarril del Pacífico", "d": "M905 1500 L735 120", "dash": "14 10" }
+  },
+  "zoom_levels": [
+    { "level": 1, "label": "Lote + zonas principales", "detail": "Polígono, accesos, plaza, parqueo y expansión." },
+    { "level": 2, "label": "Contenedores + senderos + parqueo", "detail": "Módulos container, pabellones, promenade y bahías." },
+    { "level": 3, "label": "Mobiliario + vegetación + servicios", "detail": "Mesas, palmas, accesos finos, back-of-house y etiquetas." }
+  ],
+  "plazas": [
+    { "id": "plaza-logos", "label": "Plaza Logos", "type": "plaza", "shape": "blob",
+      "d": "M380 760 q-70 30 -64 110 q8 78 86 96 q92 22 150 -28 q52 -46 28 -118 q-26 -78 -110 -86 q-52 -6 -90 26 Z",
+      "level": 1 },
+    { "id": "patio-railway", "label": "Patio mirador", "type": "patio", "shape": "rect",
+      "x": 600, "y": 600, "w": 150, "h": 110, "rot": -6, "level": 2 }
+  ],
+  "modules": [
+    { "id": "m-cafe",     "type": "container-cafe",  "label": "Café · contenedor",   "dim": "12 × 3 m", "x": 470, "y": 690, "w": 96, "h": 30, "orientation": "N-S", "phase": "F1", "state": "conceptual" },
+    { "id": "m-cocina",   "type": "cocina",          "label": "Cocina central",      "dim": "12 × 6 m", "x": 360, "y": 660, "w": 96, "h": 52, "orientation": "N-S", "phase": "F1", "state": "conceptual" },
+    { "id": "m-bar",      "type": "bar",             "label": "Bar · lounge",        "dim": "9 × 3 m",  "x": 560, "y": 860, "w": 74, "h": 30, "orientation": "E-W", "phase": "F1", "state": "conceptual" },
+    { "id": "m-retail",   "type": "retail-local",    "label": "Retail local",        "dim": "6 × 3 m",  "x": 360, "y": 900, "w": 50, "h": 30, "orientation": "E-W", "phase": "F1", "state": "conceptual" },
+    { "id": "m-deck",     "type": "deck-sombra",     "label": "Deck · sombra",       "dim": "8 × 8 m",  "x": 470, "y": 940, "w": 70, "h": 70, "orientation": "—",   "phase": "F1", "state": "conceptual" },
+    { "id": "m-banos",    "type": "banos",           "label": "Baños públicos",      "dim": "9 × 4 m",  "x": 250, "y": 800, "w": 74, "h": 36, "orientation": "N-S", "phase": "F1", "state": "conceptual" },
+    { "id": "m-railway",  "type": "container-cafe",  "label": "Railway Café · mirador", "dim": "12 × 4 m", "x": 612, "y": 600, "w": 96, "h": 36, "orientation": "NE-SW", "phase": "F2", "state": "conceptual" },
+    { "id": "m-pav-1",    "type": "pabellon",        "label": "Pabellón gastronómico 1", "dim": "14 × 8 m", "x": 600, "y": 1010, "w": 110, "h": 72, "orientation": "E-W", "phase": "F1", "state": "conceptual" },
+    { "id": "m-pav-2",    "type": "pabellon",        "label": "Pabellón gastronómico 2", "dim": "14 × 8 m", "x": 360, "y": 1060, "w": 110, "h": 72, "orientation": "E-W", "phase": "F2", "state": "conceptual" },
+    { "id": "m-service",  "type": "service-module",  "label": "Servicios / BOH",     "dim": "10 × 5 m", "x": 360, "y": 470, "w": 84, "h": 44, "orientation": "N-S", "phase": "F1", "state": "conceptual" },
+    { "id": "m-wellness", "type": "pabellon",        "label": "Wellness (reserva)",  "dim": "—",        "x": 470, "y": 380, "w": 120, "h": 80, "orientation": "—",   "phase": "F3", "state": "conceptual" }
+  ],
+  "paths": [
+    { "id": "p-arrival", "label": "Acceso peatonal", "type": "promenade", "d": "M470 1300 q-20 -120 0 -210 q24 -110 0 -210", "level": 1 },
+    { "id": "p-promenade", "label": "Promenade", "type": "promenade", "d": "M470 880 q120 -40 150 -180 q24 -120 -10 -260", "level": 2 },
+    { "id": "p-loop", "label": "Sendero jardín", "type": "trail", "d": "M300 900 q-30 120 60 210 q120 90 250 30", "level": 3 }
+  ],
+  "parking": {
+    "id": "parking-front",
+    "label": "Parqueo velado",
+    "zone": { "x": 300, "y": 1180, "w": 320, "h": 150, "rot": -3 },
+    "capacity_concept": "~28 cupos (conceptual)",
+    "stalls": { "rows": 2, "perRow": 9, "level": 2 },
+    "level": 1
+  },
+  "landscape": [
+    { "id": "palm", "type": "palm", "level": 3, "points": [[280,700],[700,760],[330,1150],[640,1180],[520,560],[420,1240],[690,900]] },
+    { "id": "green-buffer", "type": "green", "label": "Buffer verde", "level": 1,
+      "d": "M300 250 q-40 540 0 1130 q-30 -560 0 -1130 Z" },
+    { "id": "green-canopy", "type": "canopy", "label": "Canopy / sombra", "level": 3,
+      "x": 500, "y": 820, "r": 250 }
+  ],
+  "service_zones": [
+    { "id": "sz-boh", "type": "back-of-house", "label": "Back-of-house", "x": 330, "y": 440, "w": 150, "h": 120, "level": 2 },
+    { "id": "sz-tech", "type": "infraestructura", "label": "Infraestructura / técnica", "x": 280, "y": 560, "w": 90, "h": 90, "level": 3 }
+  ],
+  "labels": [
+    { "id": "l-front",   "text": "Frente vial · acceso", "x": 470, "y": 1340, "level": 1 },
+    { "id": "l-plaza",   "text": "Plaza Logos",          "x": 470, "y": 820,  "level": 1 },
+    { "id": "l-parking", "text": "Parqueo",              "x": 460, "y": 1255, "level": 1 },
+    { "id": "l-rail",    "text": "Mirador férreo",       "x": 640, "y": 560,  "level": 2 },
+    { "id": "l-exp",     "text": "Expansión futura",     "x": 470, "y": 330,  "level": 1 },
+    { "id": "l-food",    "text": "Pabellones",           "x": 480, "y": 1080, "level": 2 }
+  ],
+  "expansion": {
+    "id": "expansion", "label": "Expansión futura (reserva)",
+    "d": "M320 270 q160 -16 300 6 q12 130 0 250 q-150 -22 -300 -6 Z", "dash": "12 9", "level": 1
+  },
+  "disclaimer": "Maqueta conceptual preliminar. No reemplaza planos arquitectónicos, topografía, licencias ni diseño constructivo."
+}
