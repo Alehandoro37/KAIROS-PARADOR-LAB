@@ -1,0 +1,16 @@
+{
+  "schema": "kairos.public-events/v1",
+  "status": "PLACEHOLDER — NO analytics instalado. Esto es SOLO una especificación de eventos para integrar más adelante; ninguna página los emite todavía.",
+  "note": "Sin SDK, sin red, sin cookies, sin IDs persistentes. Cuando se decida medir, un wrapper opcional (no incluido) podría mapear estos eventos a un proveedor sin claves embebidas en el repo.",
+  "privacy": "Eventos anónimos de producto; no se recolecta PII. Respetar Do Not Track / consentimiento antes de cualquier emisión real.",
+  "events": [
+    { "name": "landing_view", "trigger": "Se muestra la landing pública", "props": { "path": "string", "referrer": "string|null" } },
+    { "name": "cta_masterplan", "trigger": "Clic en CTA Ver Masterplan", "props": { "from": "landing|nav" } },
+    { "name": "cta_journey", "trigger": "Clic en CTA Iniciar Journey", "props": { "from": "landing|nav" } },
+    { "name": "cta_map", "trigger": "Clic en CTA Ver Mapa", "props": { "from": "landing|nav" } },
+    { "name": "export_png", "trigger": "Descarga PNG del masterplan", "props": { "view": "masterplan", "zoom": "number" } },
+    { "name": "export_json", "trigger": "Descarga JSON (masterplan o contexto)", "props": { "view": "masterplan|map", "schema": "string" } },
+    { "name": "journey_start", "trigger": "Inicio del Visitor Journey", "props": { "auto": "boolean" } },
+    { "name": "map_context_load", "trigger": "Carga de contexto OSM en el mapa", "props": { "radiusM": "number", "features": "number", "source": "overpass|cache|seed" } }
+  ]
+}

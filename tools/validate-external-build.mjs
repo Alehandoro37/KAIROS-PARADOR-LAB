@@ -48,9 +48,24 @@ const required = [
   'geometry-engine/map-calibration/index.html', 'geometry-engine/map-calibration/calibration.js',
   'geometry-engine/map-calibration/osm-context.js',
   'geometry-engine/map-calibration/vendor/leaflet/leaflet.js', 'geometry-engine/map-calibration/vendor/leaflet/leaflet.css',
-  'data/lot.json', 'data/osm/osm-context-seed.json', 'data/calibration/site-calibration.json', 'data/costs.json'
+  'data/lot.json', 'data/osm/osm-context-seed.json', 'data/calibration/site-calibration.json', 'data/costs.json',
+  // favicons (avoid favicon 404 on the public pages)
+  'favicon.svg', 'geometry-engine/masterplan/favicon.svg', 'geometry-engine/map-calibration/favicon.svg'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
+
+// head polish (favicon link + meta description) on the public pages
+[
+  ['index.html', 'landing'],
+  ['geometry-engine/masterplan/index.html', 'masterplan'],
+  ['geometry-engine/map-calibration/index.html', 'map']
+].forEach(([f, label]) => {
+  const p = join(BASE, f);
+  if (!existsSync(p)) { fail(`missing page for head checks: ${label}`); return; }
+  const s = readFileSync(p, 'utf8');
+  /<link[^>]+rel=["']icon["'][^>]+href=["']favicon\.svg["']/i.test(s) ? ok(`${label}: favicon link`) : fail(`${label}: missing favicon link`);
+  /<meta[^>]+name=["']description["']/i.test(s) ? ok(`${label}: meta description`) : fail(`${label}: missing meta description`);
+});
 
 // public landing (commercial entry) — root index.html
 const landingPath = join(BASE, 'index.html');
@@ -66,6 +81,10 @@ else {
   });
   // discrete disclaimer
   /no sustituye levantamiento|conceptual preliminar/i.test(L) ? ok('landing disclaimer present') : fail('landing disclaimer missing');
+  // SEO + public nav
+  /property=["']og:title["']/i.test(L) ? ok('landing Open Graph (og:title)') : fail('landing missing Open Graph');
+  /name=["']twitter:card["']/i.test(L) ? ok('landing Twitter card') : fail('landing missing Twitter card');
+  /class="topbar"|class="pubnav"/.test(L) ? ok('landing public nav') : fail('landing missing public nav');
   // each CTA route resolves to an existing entry page
   [['./masterplan/', 'masterplan/index.html'], ['./journey/', 'journey/index.html'], ['./map/', 'map/index.html']].forEach(([href, file]) => {
     existsSync(join(BASE, file)) ? ok(`landing route resolves: ${href}`) : fail(`landing route broken: ${href} (missing ${file})`);

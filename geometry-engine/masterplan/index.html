@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Masterplan Blueprint V3 — Visitor Journey — PRELIMINAR CONCEPTUAL — KAIROS PARADOR</title>
+  <title>Masterplan Blueprint V3.1 — Logos Parador · visualización conceptual</title>
+  <meta name="description" content="Masterplan conceptual de Logos Parador (Guacarí): plaza orgánica, pabellones, journey cinematográfico. Visualización preliminar, no catastral.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="theme-color" content="#061526">
   <link rel="stylesheet" href="../../web/css/lab.css">
   <style>
     /* Page-specific styles (lab.css reused untouched). */
@@ -33,6 +37,21 @@
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center}
     .row3 .btn{justify-content:center;padding:8px 10px}
     .reset{width:100%}
+    /* public nav + conceptual banner + loading overlay (presentation only) */
+    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+    .pubnav a{padding:6px 10px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid rgba(143,229,255,.2);text-decoration:none}
+    .pubnav a:hover,.pubnav a[aria-current]{color:#fff;border-color:var(--gold);background:rgba(231,177,90,.14)}
+    .cbanner{position:absolute;left:44px;top:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid rgba(231,177,90,.18);border-radius:999px;padding:5px 11px}
+    .loading{position:absolute;inset:24px;border-radius:22px;background:rgba(4,16,28,.94);display:grid;place-items:center;z-index:700;color:#cbeeff;font:13px var(--mono);text-align:center;transition:opacity .45s}
+    .loading.hide{opacity:0;pointer-events:none}
+    .loading .spin{width:34px;height:34px;border:3px solid rgba(143,229,255,.22);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:900px){
+      #mpCanvas{height:70vh}
+      .zoomctl{right:14px;top:14px} .zoomctl button{width:34px;height:34px}
+      .mpmetrics{right:14px;left:14px;bottom:14px;max-width:none}
+      .cbanner{left:14px;top:14px} .legalnote{left:14px;max-width:88%}
+    }
   </style>
 </head>
 <body>
@@ -42,6 +61,12 @@
   <!-- ============ panel de control ============ -->
   <aside class="panel">
     <a class="back" href="../../web/index.html">← Linear Station Lab</a>
+    <nav class="pubnav" aria-label="Navegación pública">
+      <a href="../../">Landing</a>
+      <a href="../../masterplan/" aria-current="page">Masterplan</a>
+      <a href="../../journey/">Journey</a>
+      <a href="../../map/">Mapa</a>
+    </nav>
     <h1>Masterplan<br>Blueprint <span style="color:var(--gold)">V3</span></h1>
     <p class="prelim-chip">PRELIMINAR · CONCEPTUAL — VISITOR JOURNEY · NO DISEÑO FINAL</p>
     <p class="fineprint">Rediseño <b>experiencial</b> tipo eco-retreat tropical: llegada, plaza orgánica,
@@ -94,6 +119,8 @@
   <!-- ============ escenario ============ -->
   <div class="stage">
     <canvas id="mpCanvas" aria-label="Render conceptual del masterplan sobre el lote Logos"></canvas>
+    <div class="cbanner">Conceptual visualization · Logos Parador</div>
+    <div class="loading" id="mpLoading"><div><div class="spin"></div>Cargando masterplan…</div></div>
     <div class="zoomctl" role="group" aria-label="Controles de zoom">
       <button id="mpZoomIn" type="button" title="Zoom +" aria-label="Zoom más">+</button>
       <button id="mpZoomOut" type="button" title="Zoom −" aria-label="Zoom menos">−</button>
@@ -106,5 +133,19 @@
 </div>
 
 <script type="module" src="masterplan.js"></script>
+<script>
+  /* Loading overlay control — presentation only; observes the metrics panel that the
+     engine already updates ("Cargando lot.json…" → metrics). Does NOT touch render logic. */
+  (function () {
+    var ov = document.getElementById('mpLoading'); if (!ov) return;
+    var hide = function () { ov.classList.add('hide'); };
+    var m = document.getElementById('mpMetrics');
+    if (m && 'MutationObserver' in window) {
+      var obs = new MutationObserver(function () { if (!/Cargando/.test(m.textContent)) { hide(); obs.disconnect(); } });
+      obs.observe(m, { childList: true, subtree: true, characterData: true });
+    }
+    setTimeout(hide, 8000); // safety fallback
+  })();
+</script>
 </body>
 </html>

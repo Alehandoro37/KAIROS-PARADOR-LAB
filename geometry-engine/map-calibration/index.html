@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Map Calibration — PRELIMINAR — KAIROS PARADOR</title>
+  <title>Map Calibration — Logos Parador · contexto OSM (preliminar)</title>
+  <meta name="description" content="Calibración visual del lote Logos Parador (Guacarí) sobre OpenStreetMap + contexto OSM. Preliminar, no catastro ni topografía.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="theme-color" content="#061526">
   <link rel="stylesheet" href="../../web/css/lab.css">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <style>
@@ -20,6 +24,21 @@
     .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(255,211,107,.5);font:700 13px var(--mono);letter-spacing:.12em;pointer-events:none;text-align:center}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
+    /* public nav + conceptual banner + loading overlay (presentation only) */
+    .pubnav{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+    .pubnav a{padding:6px 10px;border-radius:999px;font:600 11px var(--mono);color:#b9e5ff;border:1px solid rgba(143,229,255,.2);text-decoration:none}
+    .pubnav a:hover,.pubnav a[aria-current]{color:#fff;border-color:var(--gold);background:rgba(231,177,90,.14)}
+    .cbanner{position:absolute;right:44px;bottom:40px;z-index:520;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#cdb98a;background:rgba(4,16,28,.55);border:1px solid rgba(231,177,90,.18);border-radius:999px;padding:5px 11px}
+    .loading{position:absolute;inset:24px;border-radius:22px;background:rgba(4,16,28,.94);display:grid;place-items:center;z-index:700;color:#cbeeff;font:13px var(--mono);text-align:center;transition:opacity .45s}
+    .loading.hide{opacity:0;pointer-events:none}
+    .loading .spin{width:34px;height:34px;border:3px solid rgba(143,229,255,.22);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:900px){
+      #map{height:70vh}
+      .coords-box{left:14px;top:14px;right:14px;max-width:none}
+      .offline-banner{right:14px;left:14px;top:auto;bottom:58px;max-width:none}
+      .cbanner{right:14px;bottom:14px}
+    }
   </style>
 </head>
 <body>
@@ -29,6 +48,12 @@
   <!-- ============ panel de control ============ -->
   <aside class="panel">
     <a class="back" href="../../web/index.html">← Linear Station Lab</a>
+    <nav class="pubnav" aria-label="Navegación pública">
+      <a href="../../">Landing</a>
+      <a href="../../masterplan/">Masterplan</a>
+      <a href="../../journey/">Journey</a>
+      <a href="../../map/" aria-current="page">Mapa</a>
+    </nav>
     <h1>Map<br>Calibration</h1>
     <p class="prelim-chip">PRELIMINAR · NO CATASTRO · NO TOPOGRAFÍA</p>
     <p class="fineprint">Superpone el polígono de <b>data/lot.json</b> (WGS84, trazado sobre Google Earth)
@@ -123,6 +148,8 @@
       El polígono, las coordenadas y el export siguen funcionando (modo preliminar offline).</div>
     <div class="offline-banner" id="ctxBanner" style="top:104px"></div>
     <div class="wm">PRELIMINAR — NO CATASTRO / NO TOPOGRAFÍA</div>
+    <div class="cbanner">Conceptual visualization · Logos Parador</div>
+    <div class="loading" id="mapLoading"><div><div class="spin"></div>Cargando mapa…</div></div>
   </div>
 
 </div>
@@ -130,5 +157,19 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="calibration.js"></script>
 <script src="osm-context.js"></script>
+<script>
+  /* Loading overlay control — presentation only; observes the coords panel that the
+     map already updates ("Cargando lot.json…" → coordinates). Does NOT touch map logic. */
+  (function () {
+    var ov = document.getElementById('mapLoading'); if (!ov) return;
+    var hide = function () { ov.classList.add('hide'); };
+    var c = document.getElementById('coordsBox');
+    if (c && 'MutationObserver' in window) {
+      var obs = new MutationObserver(function () { if (!/Cargando/.test(c.textContent)) { hide(); obs.disconnect(); } });
+      obs.observe(c, { childList: true, subtree: true, characterData: true });
+    }
+    setTimeout(hide, 8000); // safety fallback
+  })();
+</script>
 </body>
 </html>

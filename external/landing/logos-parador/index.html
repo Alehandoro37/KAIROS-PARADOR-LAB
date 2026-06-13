@@ -6,6 +6,20 @@
   <title>Logos Parador — Guacarí · destino gastronómico, ferroviario y tropical</title>
   <meta name="description" content="Logos Parador, Guacarí — un destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Visualización conceptual preliminar.">
   <meta name="robots" content="noindex">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="canonical" href="./">
+  <meta name="theme-color" content="#06151f">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Logos Parador — Guacarí">
+  <meta property="og:description" content="Un destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Visualización conceptual preliminar.">
+  <meta property="og:image" content="favicon.svg">
+  <meta property="og:locale" content="es_CO">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Logos Parador — Guacarí">
+  <meta name="twitter:description" content="Destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Conceptual preliminar.">
+  <meta name="twitter:image" content="favicon.svg">
   <style>
     /* Self-contained, offline-friendly, lightweight. System fonts only, no deps. */
     :root{
@@ -55,15 +69,41 @@
     .brandline{font:700 18px var(--sans);letter-spacing:.02em;color:var(--ink)}
     .disclaimer{margin-top:14px;font:11px var(--mono);letter-spacing:.03em;color:#86a7a0;max-width:680px;line-height:1.5}
     .disclaimer b{color:#d9c39a}
+    /* ---- public nav + discreet banner + loading ---- */
+    .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;
+      padding:12px 28px;background:rgba(6,21,31,.72);backdrop-filter:blur(10px);border-bottom:1px solid rgba(143,229,255,.12)}
+    .topbar .brand{font:700 14px var(--sans);letter-spacing:.04em}
+    .topbar nav{display:flex;gap:6px;flex-wrap:wrap}
+    .topbar nav a{padding:7px 12px;border-radius:999px;font:600 12px var(--sans);color:var(--muted)}
+    .topbar nav a:hover,.topbar nav a[aria-current]{color:#fff;background:rgba(231,177,90,.16)}
+    .pbanner{padding:7px 28px;text-align:center;font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;
+      color:#cdb98a;background:rgba(231,177,90,.08);border-bottom:1px solid rgba(231,177,90,.14)}
+    body{animation:fadein .5s ease both}
+    @keyframes fadein{from{opacity:0}to{opacity:1}}
     @media(max-width:860px){
-      .hero{grid-template-columns:1fr;min-height:auto;padding-top:48px}
-      .heroart{max-width:420px;margin:8px auto 0}
+      .hero{grid-template-columns:1fr;min-height:auto;padding-top:32px}
+      .heroart{max-width:360px;margin:8px auto 0}
       .g4,.g5{grid-template-columns:1fr 1fr}
+      .topbar{flex-direction:column;align-items:flex-start;gap:8px}
+      .cta{flex-direction:column;align-items:stretch}
+      .btn{justify-content:center}
     }
     @media(max-width:520px){ .g4,.g5{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
+
+  <!-- ===================== PUBLIC NAV + BANNER ===================== -->
+  <div class="topbar">
+    <span class="brand">Logos Parador</span>
+    <nav aria-label="Navegación pública">
+      <a href="./" aria-current="page">Inicio</a>
+      <a href="./masterplan/">Masterplan</a>
+      <a href="./journey/">Journey</a>
+      <a href="./map/">Mapa</a>
+    </nav>
+  </div>
+  <div class="pbanner">Conceptual visualization · Logos Parador</div>
 
   <!-- ===================== HERO ===================== -->
   <header class="hero">
