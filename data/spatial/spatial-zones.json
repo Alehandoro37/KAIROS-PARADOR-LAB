@@ -1,0 +1,74 @@
+{
+  "schema": "kairos.spatial-zones/v1",
+  "version": "1.0.0",
+  "status": "PRELIMINARY_CONCEPTUAL",
+  "crs": "EPSG:4326 (WGS84) · coordenadas [lat, lon]",
+  "source": { "lot": "../../data/lot.json", "note": "Zonas y contenedores CONCEPTUALES anclados al lote real; no es arquitectura ni catastro." },
+  "zones": [
+    { "id": "z-arrival", "label": "Arrival", "color": "#8fe5ff", "slope_pref": "low",
+      "polygon": [[3.731180,-76.323440],[3.731300,-76.323452],[3.731290,-76.323520],[3.731185,-76.323505]],
+      "constraints": ["frente al acceso vial", "pendiente baja", "fuera de retiro férreo"] },
+    { "id": "z-parking", "label": "Parking Frontage", "color": "#9fd0ff", "slope_pref": "low",
+      "polygon": [[3.731185,-76.323452],[3.731320,-76.323470],[3.731300,-76.323545],[3.731190,-76.323525]],
+      "constraints": ["alineado con frente vial (Troncal)", "drenaje permeable", "no invadir plaza"] },
+    { "id": "z-food", "label": "Food Plaza", "color": "#e7b15a", "slope_pref": "low",
+      "polygon": [[3.731330,-76.323470],[3.731520,-76.323500],[3.731500,-76.323600],[3.731340,-76.323575]],
+      "constraints": ["corazón social", "sombra y ventilación cruzada", "cerca de cocina/servicios"] },
+    { "id": "z-railway", "label": "Railway Experience", "color": "#e8a25c", "slope_pref": "moderate",
+      "polygon": [[3.731420,-76.323430],[3.731700,-76.323470],[3.731680,-76.323520],[3.731430,-76.323485]],
+      "constraints": ["orientado al corredor férreo (este)", "viewing decks / sunset corridor", "respetar retiro y servidumbre férrea"] },
+    { "id": "z-wellness", "label": "Wellness Retreat", "color": "#5fc08a", "slope_pref": "low",
+      "polygon": [[3.731700,-76.323520],[3.731829,-76.323540],[3.731800,-76.323660],[3.731690,-76.323620]],
+      "constraints": ["zona tranquila al norte", "vegetación como buffer", "privacidad"] },
+    { "id": "z-service", "label": "Service Spine", "color": "#94b8b2", "slope_pref": "low",
+      "polygon": [[3.731360,-76.323590],[3.731700,-76.323650],[3.731680,-76.323700],[3.731350,-76.323640]],
+      "constraints": ["back-of-house al costado oeste", "acceso de servicio discreto", "redes técnicas concentradas"] },
+    { "id": "z-future", "label": "Future Expansion", "color": "#b07a4a", "slope_pref": "evaluate",
+      "polygon": [[3.731790,-76.323540],[3.731860,-76.323560],[3.731840,-76.323650],[3.731780,-76.323630]],
+      "constraints": ["reserva conceptual", "no comprometer fases 1–2", "validar topografía antes"] }
+  ],
+  "ground_strategy": {
+    "principle": "Evitar nivelación agresiva; adaptarse al terreno.",
+    "options": [
+      { "id": "decks", "label": "Decks elevados sobre pilotes", "when": "pendiente moderada / drenaje / proteger raíces" },
+      { "id": "pilotes", "label": "Pilotes / micropilotes", "when": "puntos blandos o bajos" },
+      { "id": "stepped", "label": "Plataformas escalonadas", "when": "transición de niveles" },
+      { "id": "partial-fill", "label": "Relleno parcial controlado", "when": "solo donde sea imprescindible y con estudio de suelos" },
+      { "id": "avoid-leveling", "label": "Evitar nivelación total", "when": "preferente — conserva suelo, árboles y drenaje natural" }
+    ]
+  },
+  "containers": [
+    { "id": "c-cafe", "use": "Café", "type": "cafe", "zone": "z-food", "orientation": "N-S", "levels": 1, "landmark": false, "ventilation": "cruzada (aberturas N-S)", "service_access": "trasero", "circulation": "promenade", "technical": "agua/electricidad", "ground_strategy": "decks", "material": "wood-deck", "anchor": [3.731492,-76.323539], "volume": { "w": 12, "d": 3, "h": 3 } },
+    { "id": "c-cocina", "use": "Cocina central", "type": "cocina", "zone": "z-food", "orientation": "N-S", "levels": 1, "landmark": false, "ventilation": "extracción mecánica + cruzada", "service_access": "directo a service spine", "circulation": "servicio", "technical": "gas/agua/grasa/extracción", "ground_strategy": "tropical-concrete", "material": "tropical-concrete", "anchor": [3.731472,-76.323559], "volume": { "w": 12, "d": 6, "h": 3.2 } },
+    { "id": "c-banos", "use": "Baños públicos", "type": "banos", "zone": "z-service", "orientation": "E-W", "levels": 1, "landmark": false, "ventilation": "cruzada alta", "service_access": "service spine", "circulation": "secundaria", "technical": "agua/aguas residuales", "ground_strategy": "tropical-concrete", "material": "tropical-concrete", "anchor": [3.731522,-76.323584], "volume": { "w": 9, "d": 4, "h": 3 } },
+    { "id": "c-retail", "use": "Retail local", "type": "retail", "zone": "z-arrival", "orientation": "E-W", "levels": 1, "landmark": false, "ventilation": "natural", "service_access": "frontal", "circulation": "arrival", "technical": "electricidad", "ground_strategy": "permeable-pavers", "material": "permeable-pavers", "anchor": [3.731407,-76.323522], "volume": { "w": 6, "d": 3, "h": 3 } },
+    { "id": "c-bar", "use": "Bar", "type": "bar", "zone": "z-food", "orientation": "E-W", "levels": 1, "landmark": false, "ventilation": "abierta", "service_access": "trasero", "circulation": "promenade", "technical": "agua/electricidad", "ground_strategy": "wood-deck", "material": "wood-deck", "anchor": [3.731517,-76.323549], "volume": { "w": 9, "d": 3, "h": 3 } },
+    { "id": "c-lounge-tower", "use": "Railway Lounge Tower", "type": "lounge", "zone": "z-railway", "orientation": "NE-SW", "levels": 2, "landmark": true, "ventilation": "cruzada + altura", "service_access": "trasero", "circulation": "promenade + escalera", "technical": "agua/electricidad/estructura 2 niveles", "ground_strategy": "pilotes", "material": "wood-deck", "anchor": [3.731562,-76.323514], "volume": { "w": 12, "d": 4, "h": 6.5 } },
+    { "id": "c-sunset-deck", "use": "Sunset Viewing Deck", "type": "deck", "zone": "z-railway", "orientation": "E (al ferrocarril)", "levels": 2, "landmark": true, "ventilation": "abierta", "service_access": "n/a", "circulation": "promenade", "technical": "estructura elevada", "ground_strategy": "decks", "material": "wood-deck", "anchor": [3.731640,-76.323460], "volume": { "w": 8, "d": 8, "h": 5.5 } },
+    { "id": "c-wellness-rooftop", "use": "Wellness Rooftop", "type": "rooftop", "zone": "z-wellness", "orientation": "N", "levels": 2, "landmark": true, "ventilation": "abierta + sombra", "service_access": "service spine", "circulation": "sendero tranquilo", "technical": "agua/estructura 2 niveles", "ground_strategy": "stepped", "material": "wood-deck", "anchor": [3.731662,-76.323569], "volume": { "w": 10, "d": 8, "h": 6 } },
+    { "id": "c-service", "use": "Service module", "type": "service", "zone": "z-service", "orientation": "N-S", "levels": 1, "landmark": false, "ventilation": "técnica", "service_access": "directo", "circulation": "servicio", "technical": "tableros/bombas/almacén técnico", "ground_strategy": "tropical-concrete", "material": "tropical-concrete", "anchor": [3.731562,-76.323594], "volume": { "w": 10, "d": 5, "h": 3 } },
+    { "id": "c-storage", "use": "Storage", "type": "storage", "zone": "z-service", "orientation": "N-S", "levels": 1, "landmark": false, "ventilation": "pasiva", "service_access": "directo", "circulation": "servicio", "technical": "seco/ventilado", "ground_strategy": "compacted-paths", "material": "gravel-stabilized", "anchor": [3.731592,-76.323604], "volume": { "w": 6, "d": 3, "h": 3 } }
+  ],
+  "vertical_landmark_nodes": [
+    { "id": "c-lounge-tower", "label": "Railway Lounge Tower", "why": "remate vertical hacia el corredor férreo" },
+    { "id": "c-wellness-rooftop", "label": "Wellness Rooftop", "why": "mirador tranquilo al norte" },
+    { "id": "c-sunset-deck", "label": "Sunset Viewing Deck", "why": "atardecer sobre la vía" }
+  ],
+  "camera_anchors": [
+    { "id": "cam-arrival", "label": "Arrival view", "lat": 3.731210, "lon": -76.323470, "look": "N hacia plaza", "height_m": 2 },
+    { "id": "cam-railway-sunset", "label": "Railway sunset", "lat": 3.731640, "lon": -76.323460, "look": "E/NE al ferrocarril", "height_m": 5 },
+    { "id": "cam-plaza", "label": "Plaza center", "lat": 3.731430, "lon": -76.323535, "look": "panorámica", "height_m": 2 },
+    { "id": "cam-lounge", "label": "Elevated lounge", "lat": 3.731560, "lon": -76.323470, "look": "E al atardecer", "height_m": 6 },
+    { "id": "cam-wellness", "label": "Wellness retreat", "lat": 3.731760, "lon": -76.323580, "look": "N tranquilo", "height_m": 6 }
+  ],
+  "three_d_readiness": {
+    "implemented": false,
+    "note": "Descriptores para una eventual capa 3D — NO se renderiza 3D en esta versión.",
+    "geometry_export": "spatial-layout.json",
+    "terrain_mesh_prep": { "source": "data/terrain/terrain-profile.json", "grid": "11×11", "units": "m", "note": "grilla apta para malla; requiere topografía real para precisión." },
+    "container_volumes": "Cada contenedor expone volume { w, d, h } (m) como placeholder de altura.",
+    "height_placeholders": true,
+    "camera_anchors_ref": "camera_anchors"
+  },
+  "disclaimer": "Visualización conceptual preliminar. No reemplaza: topografía profesional, estudios de suelos, ingeniería, arquitectura, licencias, validación legal o catastral."
+}

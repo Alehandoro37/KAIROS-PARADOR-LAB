@@ -258,6 +258,9 @@
 
     ['lot', 'usable', 'rail', 'restricted', 'layout', 'circulation', 'landscape', 'verts'].forEach(k => state.groups[k] = L.layerGroup());
     bind(); render();
+    // Additive read-only accessor: lets terrain-spatial.js read the live (possibly
+    // edited) layout polygons for the constraint engine. Read-only; never writes here.
+    window.KairosLayout = { getPolygons: () => state.poly, getLotRef: () => lotRef };
     // keep the calibrated lot reference in sync if the user nudges calibration
     window.addEventListener('kairos:lot-redraw', () => {
       try { lotRef = window.MapCalibration.getLotLatLngs(); render(); } catch (e) { /* ignore */ }

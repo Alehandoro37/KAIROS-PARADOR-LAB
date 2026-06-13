@@ -1,0 +1,19 @@
+{
+  "schema": "kairos.material-strategy/v1",
+  "version": "1.0.0",
+  "status": "PRELIMINARY_CONCEPTUAL",
+  "principle": "Materiales de superficie que priorizan drenaje permeable, sensación tropical y bajo impacto sobre el suelo.",
+  "materials": [
+    { "id": "gravel-stabilized", "label": "Gravilla estabilizada", "color": "#bfb9a6", "use": "circulaciones de servicio, parqueo bajo árbol", "drainage": "alta (permeable)", "feel": "rústico, informal, bajo costo" },
+    { "id": "permeable-pavers", "label": "Adoquín permeable", "color": "#9fb0b8", "use": "frente vial, accesos, parqueo", "drainage": "alta (infiltración)", "feel": "ordenado, durable" },
+    { "id": "wood-deck", "label": "Deck de madera", "color": "#b07a4a", "use": "plaza, decks, lounges, miradores", "drainage": "elevado (no sella suelo)", "feel": "cálido, tropical, premium" },
+    { "id": "tropical-concrete", "label": "Concreto tropical pulido", "color": "#cdd3d6", "use": "cocina, baños, módulos técnicos", "drainage": "baja (requiere pendiente y sumideros)", "feel": "limpio, higiénico, técnico" },
+    { "id": "compacted-paths", "label": "Senderos compactados", "color": "#caa66f", "use": "senderos de jardín, recorridos suaves", "drainage": "media", "feel": "natural, integrado al paisaje" }
+  ],
+  "recommendations": [
+    "Maximizar superficies permeables para no cargar el drenaje natural.",
+    "Reservar concreto para cocina/baños/técnica (higiene), no para todo el sitio.",
+    "Decks de madera sobre puntos sensibles para no sellar el suelo ni dañar raíces."
+  ],
+  "disclaimer": "Estrategia de materiales conceptual — sujeta a diseño, presupuesto, estudios de suelos e ingeniería."
+}

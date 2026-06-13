@@ -61,7 +61,11 @@ const required = [
   // Detailed Container Layout Map (architectural site-layout model + SVG renderer + versioned JSON)
   'layout-map/index.html', 'web/js/layout-map.js', 'data/layout/container-layout.json',
   // Map-Based Layout Calibration (editable polygons module + geo seed, on Map Calibration)
-  'geometry-engine/map-calibration/layout-editor.js', 'data/calibration/layout-polygons.seed.json'
+  'geometry-engine/map-calibration/layout-editor.js', 'data/calibration/layout-polygons.seed.json',
+  // Terrain Intelligence + Spatial Constraint Engine (module + vendorized terrain + spatial data)
+  'geometry-engine/map-calibration/terrain-spatial.js',
+  'data/terrain/terrain-profile.json', 'data/terrain/slope-zones.json',
+  'data/spatial/spatial-zones.json', 'data/spatial/vegetation-strategy.json', 'data/spatial/material-strategy.json'
 ];
 required.forEach(f => existsSync(join(BASE, f)) ? ok('file: ' + f) : fail('missing file: ' + f));
 
@@ -240,7 +244,89 @@ const lmLegacyPath = join(BASE, 'layout-map', 'index.html');
 if (existsSync(lmLegacyPath)) {
   const LM = readFileSync(lmLegacyPath, 'utf8').replace(/\s+/g, ' ');
   (/fuente principal/i.test(LM) && /Map Calibration/i.test(LM) && /(legacy|secundaria)/i.test(LM)) ? ok('layout-map: marked secondary (source of truth = Map Calibration)') : fail('layout-map: not marked secondary / no source-of-truth pointer');
+  /Architectural Presentation Layer/i.test(LM) ? ok('layout-map: labeled Architectural Presentation Layer') : fail('layout-map: not labeled Architectural Presentation Layer');
   /href="\.\.\/map\/"/.test(readFileSync(lmLegacyPath, 'utf8')) ? ok('layout-map: links to Map Calibration (primary)') : fail('layout-map: missing link to Map Calibration');
+}
+
+// Terrain Intelligence + Spatial Constraint Engine — module, vendorized terrain, spatial data
+if (existsSync(mcPath)) {
+  const MC = readFileSync(mcPath, 'utf8');
+  /Spatial Source of Truth/i.test(MC) ? ok('map-calibration: labeled Spatial Source of Truth (primary)') : fail('map-calibration: missing Spatial Source of Truth label');
+  /src=["']terrain-spatial\.js["']/i.test(MC) ? ok('map-calibration: terrain-spatial.js wired (additive)') : fail('map-calibration: terrain-spatial.js not referenced');
+  (/id=["']tsTerrain["']/.test(MC) && /id=["']tsSlope["']/.test(MC) && /id=["']tsDrainage["']/.test(MC)) ? ok('map-calibration: terrain toggles (relief/slope/drainage)') : fail('map-calibration: missing terrain toggles');
+  (/id=["']tsZones["']/.test(MC) && /id=["']tsContainers["']/.test(MC) && /id=["']tsTrees["']/.test(MC) && /id=["']tsRailway["']/.test(MC)) ? ok('map-calibration: spatial-constraint toggles (zones/containers/trees/railway)') : fail('map-calibration: missing spatial toggles');
+  (/id=["']tsExportSpatial["']/.test(MC) && /id=["']tsExportTerrain["']/.test(MC) && /id=["']tsExportConstraints["']/.test(MC)) ? ok('map-calibration: spatial exports (spatial/terrain/constraint)') : fail('map-calibration: missing spatial exports');
+  /id=["']leEdit["']/.test(MC) && /class=["']le-vtx/.test(MC.replace(/\n/g, ' ')) || /le-vtx/.test(MC) ? ok('map-calibration: draggable layout vertices (editor + handles)') : fail('map-calibration: missing draggable vertex styling');
+  // prominent full disclaimer + no-false-precision terrain label
+  /No reemplaza:?\s*topograf[ií]a profesional, estudios de suelos, ingenier[ií]a, arquitectura, licencias, validaci[oó]n legal o catastral/i.test(MC.replace(/\s+/g, ' ')) ? ok('map-calibration: prominent full disclaimer') : fail('map-calibration: missing prominent full disclaimer');
+  /Elevaci[oó]n aproximada conceptual — requiere levantamiento topogr[aá]fico profesional/i.test(MC.replace(/\s+/g, ' ')) ? ok('map-calibration: no-false-precision elevation label') : fail('map-calibration: missing no-false-precision elevation label');
+}
+// terrain-spatial.js must be additive + offline (no runtime elevation network / no lot.json write)
+const tsPath = join(BASE, 'geometry-engine', 'map-calibration', 'terrain-spatial.js');
+if (existsSync(tsPath)) {
+  const TS = readFileSync(tsPath, 'utf8');
+  /window\.MapCalibration/.test(TS) ? ok('terrain-spatial: uses read-only MapCalibration handle') : fail('terrain-spatial: does not use MapCalibration handle');
+  !/open-elevation|api\.open|https?:\/\/[^"']*elevation/i.test(TS) ? ok('terrain-spatial: no runtime elevation network (vendorized)') : fail('terrain-spatial: runtime elevation network call detected');
+  !/lot\.json/.test(TS) ? ok('terrain-spatial: does not touch lot.json') : fail('terrain-spatial: references lot.json');
+}
+// vendorized terrain profile — schema, status, disclaimer, real grid
+const tpPath = join(BASE, 'data', 'terrain', 'terrain-profile.json');
+if (existsSync(tpPath)) {
+  let T = null; try { T = JSON.parse(readFileSync(tpPath, 'utf8')); } catch (e) { fail('terrain-profile not valid JSON: ' + e.message); }
+  if (T) {
+    /^kairos\.terrain-profile\//.test(T.schema || '') ? ok('terrain-profile: schema id') : fail('terrain-profile: bad schema');
+    /PRELIMINARY_CONCEPTUAL/.test(T.status || '') ? ok('terrain-profile: conceptual status') : fail('terrain-profile: status not conceptual');
+    /levantamiento topogr[aá]fico profesional/i.test(T.disclaimer || '') ? ok('terrain-profile: disclaimer (needs survey)') : fail('terrain-profile: missing disclaimer');
+    (Array.isArray(T.points) && T.points.length >= 25 && T.stats) ? ok(`terrain-profile: grid (${T.points.length} pts, ${T.stats.min}-${T.stats.max} m)`) : fail('terrain-profile: insufficient grid/stats');
+  }
+}
+// slope-zones — schema + Low/Moderate/Steep classes
+const szPath = join(BASE, 'data', 'terrain', 'slope-zones.json');
+if (existsSync(szPath)) {
+  let S = null; try { S = JSON.parse(readFileSync(szPath, 'utf8')); } catch (e) { fail('slope-zones not valid JSON: ' + e.message); }
+  if (S) {
+    /^kairos\.slope-zones\//.test(S.schema || '') ? ok('slope-zones: schema id') : fail('slope-zones: bad schema');
+    const keys = (S.classes || []).map(c => c.key);
+    (keys.includes('low') && keys.includes('moderate') && keys.includes('steep')) ? ok('slope-zones: low/moderate/steep classes') : fail('slope-zones: missing slope classes');
+    (Array.isArray(S.cells) && S.cells.length >= 25) ? ok(`slope-zones: ${S.cells.length} cells classified`) : fail('slope-zones: insufficient cells');
+  }
+}
+// spatial zones — 7 zones + containers (architecture descriptors) + 3D readiness
+const spPath = join(BASE, 'data', 'spatial', 'spatial-zones.json');
+if (existsSync(spPath)) {
+  let Z = null; try { Z = JSON.parse(readFileSync(spPath, 'utf8')); } catch (e) { fail('spatial-zones not valid JSON: ' + e.message); }
+  if (Z) {
+    /^kairos\.spatial-zones\//.test(Z.schema || '') ? ok('spatial-zones: schema id') : fail('spatial-zones: bad schema');
+    const zids = (Z.zones || []).map(z => z.id);
+    ['z-arrival', 'z-food', 'z-railway', 'z-wellness', 'z-service', 'z-parking', 'z-future'].every(id => zids.includes(id)) ? ok('spatial-zones: 7 zones (arrival/food/railway/wellness/service/parking/future)') : fail('spatial-zones: missing one of the 7 zones');
+    const cs = Z.containers || [];
+    const cfields = ['id', 'use', 'type', 'orientation', 'levels', 'ventilation', 'service_access', 'circulation', 'technical'];
+    (cs.length >= 8 && cs.every(c => cfields.every(k => k in c))) ? ok(`spatial-zones: ${cs.length} containers with architecture descriptors`) : fail('spatial-zones: containers missing architecture fields');
+    (Z.vertical_landmark_nodes && Z.vertical_landmark_nodes.length >= 2) ? ok('spatial-zones: vertical landmark nodes') : fail('spatial-zones: missing landmark nodes');
+    (Z.three_d_readiness && Z.three_d_readiness.implemented === false && Z.camera_anchors && Z.camera_anchors.length >= 3) ? ok('spatial-zones: 3D-readiness (descriptors + camera anchors, not rendered)') : fail('spatial-zones: missing 3D-readiness/camera anchors');
+    Z.ground_strategy ? ok('spatial-zones: ground strategy (decks/pilotes/stepped/fill/avoid-leveling)') : fail('spatial-zones: missing ground strategy');
+  }
+}
+// vegetation strategy — preserve/evaluate/remove (no assumed clearing)
+const vgPath = join(BASE, 'data', 'spatial', 'vegetation-strategy.json');
+if (existsSync(vgPath)) {
+  let V = null; try { V = JSON.parse(readFileSync(vgPath, 'utf8')); } catch (e) { fail('vegetation-strategy not valid JSON: ' + e.message); }
+  if (V) {
+    /^kairos\.vegetation-strategy\//.test(V.schema || '') ? ok('vegetation-strategy: schema id') : fail('vegetation-strategy: bad schema');
+    const acts = (V.actions || []).map(a => a.key);
+    (acts.includes('preserve') && acts.includes('evaluate') && acts.includes('remove')) ? ok('vegetation-strategy: preserve/evaluate/remove (no assumed clearing)') : fail('vegetation-strategy: missing actions');
+    (Array.isArray(V.clusters) && V.clusters.length >= 3 && Array.isArray(V.green_corridors)) ? ok('vegetation-strategy: tree clusters + green corridors') : fail('vegetation-strategy: missing clusters/corridors');
+  }
+}
+// material strategy — surface materials
+const mtPath = join(BASE, 'data', 'spatial', 'material-strategy.json');
+if (existsSync(mtPath)) {
+  let MM = null; try { MM = JSON.parse(readFileSync(mtPath, 'utf8')); } catch (e) { fail('material-strategy not valid JSON: ' + e.message); }
+  if (MM) {
+    /^kairos\.material-strategy\//.test(MM.schema || '') ? ok('material-strategy: schema id') : fail('material-strategy: bad schema');
+    const mids = (MM.materials || []).map(m => m.id);
+    ['gravel-stabilized', 'permeable-pavers', 'wood-deck', 'tropical-concrete', 'compacted-paths'].every(id => mids.includes(id)) ? ok('material-strategy: surface materials catalog') : fail('material-strategy: missing materials');
+  }
 }
 
 // public landing (commercial entry) — root index.html

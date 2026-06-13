@@ -46,11 +46,20 @@
     .offline-banner{position:absolute;right:44px;top:44px;max-width:320px;background:rgba(176,85,60,.92);color:#fff;border-radius:14px;padding:12px 14px;font:12px var(--mono);z-index:600;display:none;box-shadow:0 14px 36px rgba(0,0,0,.34)}
     .offline-banner.show{display:block}
     .leaflet-container{font-family:var(--mono)}
-    /* editable layout vertices (layout-editor.js) */
+    /* editable layout vertices (layout-editor.js) — draggable handles + hover */
     .le-vtx{background:#e7b15a;border:2px solid #06141d;border-radius:50%;width:14px;height:14px;
-      box-shadow:0 0 0 2px rgba(231,177,90,.45);cursor:grab}
+      box-shadow:0 0 0 2px rgba(231,177,90,.45);cursor:grab;transition:transform .1s}
+    .le-vtx:hover{transform:scale(1.4);box-shadow:0 0 0 3px rgba(231,177,90,.6)}
     .le-vtx:active{cursor:grabbing}
     #leImport{position:absolute;width:0;height:0;opacity:0}
+    /* spatial source-of-truth chip + big disclaimer + terrain-spatial labels */
+    .ssot{display:inline-block;margin:6px 0 2px;padding:5px 11px;border:1px solid rgba(95,192,138,.5);
+      border-radius:999px;color:#bdeed3;background:rgba(95,192,138,.1);font:600 10px var(--mono);letter-spacing:.08em}
+    .bigdisc{margin:0 0 12px;padding:9px 11px;border-radius:12px;background:rgba(176,85,60,.16);
+      border:1px solid rgba(176,85,60,.4);color:#f3c9bb;font:600 11px var(--mono);line-height:1.5}
+    .bigdisc b{color:#ffe7d6}
+    .ts-zlbl{color:#eaf6ff;font:600 11px var(--mono);text-shadow:0 1px 3px #05101a;white-space:nowrap;pointer-events:none}
+    .ts-rail{color:#f3d3a8;font:14px var(--mono);text-shadow:0 1px 3px #05101a}
     .wm{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:500;color:rgba(231,177,90,.5);font:700 12px var(--mono);letter-spacing:.14em;pointer-events:none;text-align:center}
     .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .reset{width:100%}
@@ -94,6 +103,7 @@
     </nav>
     <h1>Map<br>Calibration</h1>
     <p class="prelim-chip">PRELIMINAR · NO CATASTRO · NO TOPOGRAFÍA</p>
+    <p class="ssot">★ Spatial Source of Truth — inteligencia espacial del sitio</p>
     <p class="fineprint">Superpone el polígono de <b>data/lot.json</b> (WGS84, trazado sobre Google Earth)
       sobre un mapa base <b>OpenStreetMap</b> para alinearlo visualmente con la infraestructura cercana.
       Nada aquí es catastro ni levantamiento. Solo los <i>tiles</i> requieren internet; el resto funciona offline.</p>
@@ -237,6 +247,51 @@
         manual. Sin backend. Coordenadas en WGS84 reales del lote — <b>sin precisión catastral</b>.</p>
     </fieldset>
 
+    <fieldset>
+      <legend>Terrain Intelligence — PRELIMINAR</legend>
+      <p class="bigdisc"><b>Visualización conceptual preliminar.</b> No reemplaza: topografía profesional,
+        estudios de suelos, ingeniería, arquitectura, licencias, validación legal o catastral.</p>
+      <div class="ctrl">
+        <label><input type="checkbox" id="tsTerrain"> Relieve / elevación (gradiente aprox.)</label>
+        <label><input type="checkbox" id="tsSlope"> Pendientes (baja/moderada/pronunciada)</label>
+        <label><input type="checkbox" id="tsDrainage"> Drenaje aprox. (flujos / puntos bajos)</label>
+      </div>
+      <p class="fineprint"><b>Elevación aproximada conceptual — requiere levantamiento topográfico
+        profesional.</b> Fuente: <code>data/terrain/terrain-profile.json</code> (SRTM ~30 m vía
+        Open-Elevation, <b>vendorizado</b> como JSON estático — sin red ni API key en runtime). Pendiente
+        derivada por gradiente entre muestras (conceptual). Sin ingeniería hidráulica.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Spatial Constraint Engine — PRELIMINAR</legend>
+      <div class="ctrl">
+        <label><input type="checkbox" id="tsZones"> Zonas (arrival · food · railway · wellness · service · parking · future)</label>
+        <label><input type="checkbox" id="tsContainers"> Contenedores + restricciones</label>
+        <label><input type="checkbox" id="tsTrees"> Vegetación / árboles (conservar/evaluar/retirar)</label>
+        <label><input type="checkbox" id="tsRailway"> Railway identity corridor</label>
+      </div>
+      <p class="fineprint" id="tsStatus">Cargando capa espacial…</p>
+      <p class="fineprint">Los contenedores reaccionan a <b>pendiente</b>, <b>área utilizable</b>, <b>zonas
+        restringidas</b> y al <b>corredor férreo</b>; los que quedan en conflicto se marcan. Árboles:
+        <b>NO se asume limpieza total</b> — conservar sombra, abrir corredores, usar vegetación como
+        separador. Railway: <b>Validar propiedad, servidumbres, retiros y permisos</b>.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Spatial exports — conceptual</legend>
+      <div class="row2">
+        <button class="btn primary reset" id="tsExportSpatial" type="button">Export Spatial Layout JSON</button>
+        <button class="btn primary reset" id="tsExportTerrain" type="button">Export Terrain Layout JSON</button>
+      </div>
+      <div class="row2" style="margin-top:10px">
+        <button class="btn reset" id="tsExportConstraints" type="button">Export Constraint Report JSON</button>
+        <button class="btn reset" id="tsExportPng" type="button">Export PNG snapshot</button>
+      </div>
+      <p class="fineprint">Incluye zonas, contenedores (uso/orientación/nivel/ventilación/servicio/técnica),
+        <b>vertical landmark nodes</b>, ground strategy, materiales, <b>camera anchors</b> y descriptores
+        de <b>3D-readiness</b> (NO se renderiza 3D). Todo conceptual.</p>
+    </fieldset>
+
     <p class="fineprint">Fuente geométrica única: <b>data/lot.json</b> (no se modifica). Tiles y contexto ©
       OpenStreetMap contributors.</p>
   </aside>
@@ -261,6 +316,9 @@
 <!-- ADDITIVE: editable layout polygons + "Layout on Map" overlay. Consumes the
      read-only window.MapCalibration handle; does NOT alter calibration logic. -->
 <script src="layout-editor.js"></script>
+<!-- ADDITIVE: Terrain Intelligence + Spatial Constraint Engine. Reads vendorized
+     terrain/spatial JSON + the read-only layout handle; does NOT alter calibration. -->
+<script src="terrain-spatial.js"></script>
 <script>
   /* Loading overlay control — presentation only; observes the coords panel that the
      map already updates ("Cargando lot.json…" → coordinates). Does NOT touch map logic. */

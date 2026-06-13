@@ -1,0 +1,31 @@
+{
+  "schema": "kairos.vegetation-strategy/v1",
+  "version": "1.0.0",
+  "status": "PRELIMINARY_CONCEPTUAL",
+  "crs": "EPSG:4326 (WGS84) · [lat, lon]",
+  "principle": "NO se asume limpieza total del terreno. La vegetación existente es activo de sombra, paisaje y separación; se conserva donde aporta y solo se interviene lo imprescindible, con inventario forestal profesional.",
+  "actions": [
+    { "key": "preserve", "label": "Conservar", "color": "#3f8f63", "note": "Sombra, identidad y microclima — mantener." },
+    { "key": "evaluate", "label": "Evaluar", "color": "#e7b15a", "note": "Estado sanitario/posición a verificar con silvicultura." },
+    { "key": "remove", "label": "Retirar si es necesario", "color": "#e0795a", "note": "Solo si interfiere y tras estudio; reponer cobertura." }
+  ],
+  "clusters": [
+    { "id": "veg-canopy-plaza", "label": "Canopy plaza", "action": "preserve", "center": [3.731430,-76.323540], "radius_m": 14, "note": "Sombra del corazón social — prioridad de conservación." },
+    { "id": "veg-rail-buffer", "label": "Buffer férreo", "action": "preserve", "center": [3.731600,-76.323450], "radius_m": 10, "note": "Filtro visual y verde hacia la vía; conservar como separador." },
+    { "id": "veg-north-grove", "label": "Bosquete norte", "action": "preserve", "center": [3.731770,-76.323590], "radius_m": 12, "note": "Privacidad del wellness; conservar." },
+    { "id": "veg-frontage", "label": "Frente vial", "action": "evaluate", "center": [3.731250,-76.323470], "radius_m": 8, "note": "Evaluar por visibilidad de acceso y seguridad vial." },
+    { "id": "veg-service", "label": "Franja servicio", "action": "evaluate", "center": [3.731560,-76.323630], "radius_m": 7, "note": "Evaluar reubicación de servicios sin tala innecesaria." },
+    { "id": "veg-core-conflict", "label": "Eje cocina/servicio", "action": "remove", "center": [3.731390,-76.323560], "radius_m": 5, "note": "Retirar solo si interfiere con cocina; reponer en corredores." }
+  ],
+  "green_corridors": [
+    { "id": "gc-spine", "label": "Corredor verde central", "line": [[3.731230,-76.323500],[3.731430,-76.323540],[3.731700,-76.323520]], "note": "Conecta arrival → plaza → railway con sombra continua." },
+    { "id": "gc-buffer", "label": "Corredor buffer oeste", "line": [[3.731360,-76.323630],[3.731700,-76.323650]], "note": "Vegetación como separador del back-of-house." }
+  ],
+  "recommendations": [
+    "Conservar la sombra existente como activo de confort tropical.",
+    "Abrir corredores verdes en lugar de despejar el lote.",
+    "Usar vegetación como separador visual del back-of-house y del frente vial.",
+    "Inventario forestal y concepto de silvicultura antes de cualquier tala."
+  ],
+  "disclaimer": "Estrategia de vegetación conceptual — requiere inventario forestal profesional. No autoriza tala ni intervención."
+}
