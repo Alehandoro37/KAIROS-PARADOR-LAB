@@ -7,19 +7,20 @@
   <meta name="description" content="Logos Parador, Guacarí — un destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Visualización conceptual preliminar.">
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="assets/logo.jpg">
   <link rel="canonical" href="./">
   <meta name="theme-color" content="#06151f">
-  <!-- Open Graph -->
+  <!-- Open Graph (og:image absoluto — los crawlers requieren URL absoluta; ver docs/deploy/brand-assets.md) -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Logos Parador — Guacarí">
   <meta property="og:description" content="Un destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Visualización conceptual preliminar.">
-  <meta property="og:image" content="favicon.svg">
+  <meta property="og:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
   <meta property="og:locale" content="es_CO">
   <!-- Twitter -->
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Logos Parador — Guacarí">
   <meta name="twitter:description" content="Destino gastronómico, ferroviario y tropical junto a la Troncal de Occidente. Conceptual preliminar.">
-  <meta name="twitter:image" content="favicon.svg">
+  <meta name="twitter:image" content="https://kairosacademytech.com/external/landing/logos-parador/assets/logo.jpg">
   <style>
     /* Self-contained, offline-friendly, lightweight. System fonts only, no deps. */
     :root{
@@ -72,7 +73,9 @@
     /* ---- public nav + discreet banner + loading ---- */
     .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;
       padding:12px 28px;background:rgba(6,21,31,.72);backdrop-filter:blur(10px);border-bottom:1px solid rgba(143,229,255,.12)}
-    .topbar .brand{font:700 14px var(--sans);letter-spacing:.04em}
+    .topbar .brand{display:flex;align-items:center;gap:10px;font:700 14px var(--sans);letter-spacing:.04em;color:var(--ink);text-decoration:none}
+    .brandlogo{height:38px;width:auto;display:block;border-radius:8px}
+    .topbar .brand span{display:inline-block}
     .topbar nav{display:flex;gap:6px;flex-wrap:wrap}
     .topbar nav a{padding:7px 12px;border-radius:999px;font:600 12px var(--sans);color:var(--muted)}
     .topbar nav a:hover,.topbar nav a[aria-current]{color:#fff;background:rgba(231,177,90,.16)}
@@ -95,7 +98,10 @@
 
   <!-- ===================== PUBLIC NAV + BANNER ===================== -->
   <div class="topbar">
-    <span class="brand">Logos Parador</span>
+    <a class="brand" href="./" aria-label="Logos Parador — inicio">
+      <img class="brandlogo" src="assets/logo.jpg" alt="Logos Parador · Kairos" width="42" height="38" decoding="async">
+      <span>Logos Parador</span>
+    </a>
     <nav aria-label="Navegación pública">
       <a href="./" aria-current="page">Inicio</a>
       <a href="./masterplan/">Masterplan</a>
