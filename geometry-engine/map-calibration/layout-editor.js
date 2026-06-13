@@ -56,8 +56,10 @@
     if (key === 'frontage') return state.poly.frontage_zone && state.poly.frontage_zone.polygon;
     if (key === 'service') return state.poly.service_zone && state.poly.service_zone.polygon;
     if (key.startsWith('rz:')) { const z = (state.poly.restricted_zones || []).find(r => r.id === key.slice(3)); return z && z.polygon; }
+    if (key.startsWith('dp:')) { const z = (state.poly.drawn_polygons || []).find(r => r.id === key.slice(3)); return z && z.polygon; }
     return null;
   }
+  const DRAWN_COLORS = { deck: '#67c994', plaza: '#e7b15a', expansion: '#b07a4a', usable: '#5fc08a', rail: '#e8a25c', frontage: '#9fd0ff', service: '#94b8b2', restricted: '#e0795a', other: '#8fe5ff' };
 
   // ---- persistence ---------------------------------------------------------
   function persist() { try { localStorage.setItem(LS_KEY, JSON.stringify(state.poly)); } catch (e) { /* private mode */ } }
@@ -92,12 +94,16 @@
       poly(z.polygon, COLORS.restricted, { dashArray: '4 4', fillOpacity: 0.16 }).bindTooltip(z.label || 'No-build (preliminar)')); });
     if (state.poly.frontage_zone && !hid('frontage')) state.groups.restricted.addLayer(poly(state.poly.frontage_zone.polygon, COLORS.frontage, { fillOpacity: 0.1 }).bindTooltip(state.poly.frontage_zone.label));
     if (state.poly.service_zone && !hid('service')) state.groups.restricted.addLayer(poly(state.poly.service_zone.polygon, COLORS.service, { fillOpacity: 0.1 }).bindTooltip(state.poly.service_zone.label));
+    // user-drawn polygons (Draw Polygon from scratch)
+    clearGroup('drawn');
+    (state.poly.drawn_polygons || []).forEach(z => { if (!hid('dp:' + z.id)) state.groups.drawn.addLayer(
+      poly(z.polygon, DRAWN_COLORS[z.category] || DRAWN_COLORS.other, { fillOpacity: 0.14 }).bindTooltip((z.label || z.category || 'dibujado') + ' (dibujado · editable)')); });
 
     renderLayout();
     renderVerts();
 
     showGroup('lot', state.show.lot); showGroup('usable', state.show.usable);
-    showGroup('rail', state.show.rail); showGroup('restricted', state.show.restricted);
+    showGroup('rail', state.show.rail); showGroup('restricted', state.show.restricted); showGroup('drawn', true);
     showGroup('layout', state.show.layout); showGroup('circulation', state.show.circulation);
     showGroup('landscape', state.show.landscape);
   }
@@ -244,21 +250,45 @@
   }
 
   // ---- boot ----------------------------------------------------------------
+  // Rebuild base editable polygons from the REAL lot (conceptual; review manually).
+  function rebuildFromLot() {
+    if (!lotRef || lotRef.length < 3 || !state.poly) return false;
+    const c = centroid(lotRef), b = bbox(lotRef), lonR = b.e - b.w, latR = b.n - b.s;
+    const inset = (f) => lotRef.map(p => [c[0] + (p[0] - c[0]) * f, c[1] + (p[1] - c[1]) * f]);
+    state.poly.usable_area_polygon = inset(0.82);
+    // road/rail sit on the east side (max lon): frontage east, service west
+    state.poly.frontage_zone = { id: 'frontage', label: 'Frente / parqueo (auto)', polygon: [
+      [b.s + latR * 0.10, b.e - lonR * 0.03], [b.n - latR * 0.10, b.e - lonR * 0.05], [b.n - latR * 0.12, b.e - lonR * 0.24], [b.s + latR * 0.12, b.e - lonR * 0.22]] };
+    state.poly.service_zone = { id: 'service', label: 'Servicio / back-of-house (auto)', polygon: [
+      [b.s + latR * 0.42, b.w + lonR * 0.05], [b.n - latR * 0.20, b.w + lonR * 0.03], [b.n - latR * 0.22, b.w + lonR * 0.24], [b.s + latR * 0.44, b.w + lonR * 0.26]] };
+    state.poly.rail_side_opportunity_polygon = [
+      [b.s + latR * 0.12, b.e + lonR * 0.06], [b.n - latR * 0.12, b.e + lonR * 0.10], [b.n - latR * 0.14, b.e + lonR * 0.55], [b.s + latR * 0.14, b.e + lonR * 0.50]];
+    state.poly.rail_opportunity_label = 'Zona de oportunidad visual / posible uso — validar propiedad, servidumbres y retiros';
+    state.poly.rail_axis_hint = { label: 'Eje férreo (auto · validar)', line: [[b.s - latR * 0.05, b.e + lonR * 0.03], [b.n + latR * 0.05, b.e + lonR * 0.05]] };
+    state.poly.restricted_zones = [{ id: 'rz-rail-setback', label: 'Retiro férreo (auto · validar)', polygon: [
+      [b.s + latR * 0.05, b.e - lonR * 0.01], [b.n - latR * 0.05, b.e - lonR * 0.03], [b.n - latR * 0.06, b.e - lonR * 0.11], [b.s + latR * 0.06, b.e - lonR * 0.09]] }];
+    state.poly._generated_from_lot = true; state.poly._recalibrated = true;
+    persist(); render(); return true;
+  }
+
   async function boot() {
     if (!window.MapCalibration || !window.L) return;
     L = window.L; map = window.MapCalibration.map;
     try { lotRef = window.MapCalibration.getLotLatLngs ? window.MapCalibration.getLotLatLngs() : null; } catch (e) { lotRef = null; }
 
+    let seed = null; try { seed = await fetch(SEED_URL).then(r => r.json()); } catch (e) { seed = null; }
+    state.seed = seed ? JSON.parse(JSON.stringify(seed)) : null;   // kept for "Reset editable polygons"
     const stored = loadStored();
     if (stored && stored.usable_area_polygon) state.poly = stored;
-    else { try { state.poly = await fetch(SEED_URL).then(r => r.json()); } catch (e) { state.poly = null; } }
+    else if (seed) state.poly = JSON.parse(JSON.stringify(seed));
+    else state.poly = null;
     if (!state.poly) { if ($('leStatus')) $('leStatus').textContent = 'No se pudo cargar el seed de polígonos (requiere build externo).'; return; }
     // if no usable defined but lot known, seed usable from the real lot
     if (!state.poly.usable_area_polygon && lotRef) state.poly.usable_area_polygon = lotRef.map(p => p.slice());
 
     try { catalog = await fetch(CATALOG_URL).then(r => r.json()); } catch (e) { catalog = null; }
 
-    ['lot', 'usable', 'rail', 'restricted', 'layout', 'circulation', 'landscape', 'verts'].forEach(k => state.groups[k] = L.layerGroup());
+    ['lot', 'usable', 'rail', 'restricted', 'drawn', 'layout', 'circulation', 'landscape', 'verts'].forEach(k => state.groups[k] = L.layerGroup());
     bind(); render();
     // Additive read-only accessor: lets terrain-spatial.js read the live (possibly
     // edited) layout polygons for the constraint engine. Read-only; never writes here.
@@ -280,9 +310,32 @@
         else if (key === 'frontage') state.poly.frontage_zone = null;
         else if (key === 'service') state.poly.service_zone = null;
         else if (key.startsWith('rz:')) state.poly.restricted_zones = (state.poly.restricted_zones || []).filter(z => z.id !== key.slice(3));
+        else if (key.startsWith('dp:')) state.poly.drawn_polygons = (state.poly.drawn_polygons || []).filter(z => z.id !== key.slice(3));
         else return false;
         persist(); render(); return true;
       },
+      // Recalibration V1: rebuild base polygons from the REAL lot; reset to seed; clear
+      // all editable overlays; add a user-drawn polygon. None of these touch lot.json.
+      rebuildFromLot: () => rebuildFromLot(),
+      resetEditablePolygons: () => {
+        if (!state.seed) return false;
+        state.poly = JSON.parse(JSON.stringify(state.seed)); state.poly.drawn_polygons = []; state.poly._recalibrated = true; state.poly._generated_from_lot = false;
+        persist(); render(); return true;
+      },
+      clearEditablePolygons: () => {
+        if (!state.poly) return false;
+        state.poly.usable_area_polygon = null; state.poly.rail_side_opportunity_polygon = null; state.poly.rail_axis_hint = null;
+        state.poly.frontage_zone = null; state.poly.service_zone = null; state.poly.restricted_zones = []; state.poly.drawn_polygons = [];
+        state.poly._recalibrated = true; persist(); render(); return true;
+      },
+      addDrawnPolygon: (category, latlngs, label) => {
+        if (!state.poly || !latlngs || latlngs.length < 3) return null;
+        state.poly.drawn_polygons = state.poly.drawn_polygons || [];
+        const id = 'd' + (state.poly.drawn_polygons.length + 1) + '-' + Math.abs((latlngs.length * 2654435761) % 99991);
+        state.poly.drawn_polygons.push({ id, category: category || 'other', label: label || category || 'Polígono dibujado', polygon: latlngs.map(p => p.slice()), status: 'PRELIMINARY_CONCEPTUAL' });
+        state.poly._recalibrated = true; persist(); render(); return 'dp:' + id;
+      },
+      flags: () => ({ source_lot_unchanged: true, editable_polygons_recalibrated: !!(state.poly && state.poly._recalibrated), generated_from_lot: !!(state.poly && state.poly._generated_from_lot) }),
       setHidden: (key, on) => { if (on) state.hidden.add(key); else state.hidden.delete(key); render(); },
       isHidden: (key) => state.hidden.has(key),
       // compact layer list: { key, label, deletable } (lot original is deletable:false)
@@ -295,6 +348,7 @@
           if (state.poly.frontage_zone) out.push({ key: 'frontage', label: 'Frente / parqueo', deletable: true });
           if (state.poly.service_zone) out.push({ key: 'service', label: 'Servicio', deletable: true });
           (state.poly.restricted_zones || []).forEach(z => out.push({ key: 'rz:' + z.id, label: z.label || z.id, deletable: true }));
+          (state.poly.drawn_polygons || []).forEach(z => out.push({ key: 'dp:' + z.id, label: (z.label || z.category || 'dibujado') + ' ✎', deletable: true }));
         }
         return out;
       }

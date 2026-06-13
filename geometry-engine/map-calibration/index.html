@@ -103,6 +103,7 @@
     .ws-llname:hover{color:#fff}
     .ws-eye{background:none;border:0;cursor:pointer;font-size:13px;opacity:.8;padding:2px}
     .ws-ro{font:600 9px var(--mono);color:#9cc6dd;border:1px solid rgba(143,229,255,.25);border-radius:6px;padding:2px 5px}
+    .ws-warn{margin:8px 0 0;padding:7px 9px;border-radius:8px;background:rgba(231,177,90,.12);border:1px solid rgba(231,177,90,.35);color:#f1ddb6;font:600 11px var(--mono);line-height:1.4}
     .ws-b[aria-pressed="true"]{background:linear-gradient(120deg,#e7b15a,#d8954a);color:#10241f;border-color:transparent}
     .ws-plan{position:absolute;left:24px;right:24px;top:24px;height:calc(100vh - 48px);z-index:1200;background:#06141d;
       background-image:radial-gradient(120% 80% at 80% -10%,rgba(23,86,92,.28),rgba(5,16,26,0) 60%);
@@ -398,6 +399,20 @@
       <select id="wsNoteCat"></select>
       <span class="ws-hint">Clic en el mapa para anotar (árbol, borde, acceso, sombra…). Preliminar.</span>
     </div>
+    <!-- draw polygon bar (Draw Polygon mode) -->
+    <div class="ws-notebar" id="wsDrawBar" style="display:none">
+      <span>Dibujar polígono:</span>
+      <select id="wsDrawCat">
+        <option value="deck">deck</option><option value="plaza">plaza</option><option value="expansion">expansión</option>
+        <option value="usable">área utilizable</option><option value="frontage">frente/parqueo</option>
+        <option value="service">servicio</option><option value="restricted">restringido</option><option value="other">otro</option>
+      </select>
+      <span>Snap:</span>
+      <select id="wsSnap"><option value="off">off</option><option value="lot">lot edge</option><option value="road">road side</option></select>
+      <button class="ws-b" id="wsDrawFinish" type="button">Finish</button>
+      <button class="ws-b" id="wsDrawCancel" type="button">Cancel</button>
+      <span class="ws-hint" id="wsDrawInfo">Clic para puntos · doble-clic/Finish cierra · Esc cancela. Conceptual.</span>
+    </div>
 
     <!-- properties + extra exports panel -->
     <div class="ws-bottom">
@@ -409,6 +424,13 @@
           <button class="ws-b" id="wsSave" type="button">Save to browser</button>
           <button class="ws-b" id="wsReset" type="button">Reset to seed</button>
         </div>
+        <p class="ws-lbl">Recalibración de polígonos</p>
+        <div class="ws-exports">
+          <button class="ws-b" id="wsResetPolys" type="button">Reset editable polygons</button>
+          <button class="ws-b" id="wsClearOverlays" type="button">Clear editable overlays</button>
+          <button class="ws-b" id="wsRebuild" type="button">Rebuild from original lot</button>
+        </div>
+        <p class="ws-warn">⚠ Los polígonos editables son hipótesis de diseño. No modifican el lote legal.</p>
         <p class="ws-lbl">Capas (seleccionar · ocultar 👁 · borrar ✕)</p>
         <div class="ws-layers" id="wsLayers"></div>
         <p class="ws-lbl">Layer presets</p>
@@ -417,6 +439,7 @@
           <button class="ws-b" data-ws-preset="full" aria-pressed="false" type="button">Full Analysis</button>
           <button class="ws-b" data-ws-preset="satellite" aria-pressed="false" type="button">Satellite Markup</button>
           <button class="ws-b" data-ws-preset="construction" aria-pressed="false" type="button">Construction</button>
+          <button class="ws-b" data-ws-preset="recal" aria-pressed="false" type="button">Clean Recalibration</button>
         </div>
         <p class="ws-lbl">Zoom <span id="wsZoomLevel" style="color:#9cc6dd">z18</span></p>
         <div class="ws-exports">

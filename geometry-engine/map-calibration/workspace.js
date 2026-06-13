@@ -40,7 +40,8 @@
   const NOTE_CATS = ['general', 'árbol', 'borde de terreno', 'zona despejada', 'acceso posible', 'sombra/vegetación'];
 
   const state = {
-    mode: 'select', addType: 'container-20', noteCat: 'general', snap: false, selPoly: null,
+    mode: 'select', addType: 'container-20', noteCat: 'general', snap: 'off', selPoly: null,
+    drawPts: [], drawCat: 'deck', roadLine: null,
     elements: [], notes: [], sel: null, layers: {}, esri: null, veg: null, anchors: [],
     hiddenEl: new Set(), hiddenNote: new Set()
   };
@@ -177,12 +178,14 @@
 
   // ---- toolbar / modes ------------------------------------------------------
   function setMode(m) {
+    if (state.mode === 'draw' && m !== 'draw') { cancelDraw(); if (map.doubleClickZoom) map.doubleClickZoom.enable(); }
     state.mode = m;
     document.querySelectorAll('[data-ws-mode]').forEach(b => b.setAttribute('aria-pressed', b.getAttribute('data-ws-mode') === m ? 'true' : 'false'));
     const pal = $('wsPalette'); if (pal) pal.style.display = m === 'add' ? '' : 'none';
     const nb = $('wsNoteBar'); if (nb) nb.style.display = m === 'notes' ? '' : 'none';
-    if (m === 'draw') { const e = $('leEdit'); if (e && e.getAttribute('aria-pressed') !== 'true') e.click(); } // reuse polygon editor
-    map.getContainer().style.cursor = (m === 'add' || m === 'notes') ? 'crosshair' : '';
+    const db = $('wsDrawBar'); if (db) db.style.display = m === 'draw' ? '' : 'none';
+    if (m === 'draw') { state.drawPts = []; renderDrawTmp(); if (map.doubleClickZoom) map.doubleClickZoom.disable(); if ($('wsDrawInfo')) $('wsDrawInfo').textContent = 'Clic para puntos · doble-clic/Finish cierra · Esc cancela'; }
+    map.getContainer().style.cursor = (m === 'add' || m === 'notes' || m === 'draw') ? 'crosshair' : '';
   }
   function addElementAt(latlng) {
     const t = TYPES[state.addType]; const el = { id: uid(), type: state.addType, w: t.w, d: t.d, rotation: 0, phase: 'F1', note: '', lat: latlng.lat, lon: latlng.lng, status: 'conceptual' };
@@ -224,6 +227,7 @@
       coordinate_system: 'WGS84 EPSG:4326',
       source: 'map-calibration',
       status: 'PRELIMINARY_CONCEPTUAL',
+      ...((window.KairosLayout && window.KairosLayout.flags) ? window.KairosLayout.flags() : { source_lot_unchanged: true, editable_polygons_recalibrated: false, generated_from_lot: false }),
       role: 'Map Calibration = Spatial Source of Truth (núcleo editable). layout-map = presentación planimétrica secundaria. 3D = visualización derivada.',
       center: (window.MapCalibration && window.MapCalibration.getCentroid && window.MapCalibration.getCentroid()) || null,
       polygons: polys(),
@@ -361,7 +365,9 @@
     'clean': { on: ['leShowLot', 'leShowUsable', 'leShowRail', 'tsZones', 'tsContainers'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'leShowRestricted', 'leShowLayout', 'leShowCirc', 'leShowLand'] },
     'full': { on: ['leShowLot', 'leShowUsable', 'leShowRail', 'leShowRestricted', 'tsTerrain', 'tsSlope', 'tsDrainage', 'tsZones', 'tsContainers', 'tsTrees', 'tsRailway'], off: [] },
     'satellite': { on: ['leShowLot', 'leShowUsable', 'leShowRail'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsContainers', 'tsTrees', 'leShowLayout'], base: 'satellite' },
-    'construction': { on: ['leShowLot', 'leShowUsable', 'leShowRestricted', 'tsZones', 'tsRailway'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'tsContainers'] }
+    'construction': { on: ['leShowLot', 'leShowUsable', 'leShowRestricted', 'tsZones', 'tsRailway'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'tsContainers'] },
+    // Clean Recalibration: only lot + road/rail + selected polygon + handles
+    'recal': { on: ['leShowLot', 'leShowUsable', 'leShowRail', 'ctxRoads', 'ctxRail'], off: ['tsTerrain', 'tsSlope', 'tsDrainage', 'tsTrees', 'tsContainers', 'tsZones', 'leShowLayout', 'leShowRestricted', 'leShowCirc', 'leShowLand'] }
   };
   function applyPreset(name) {
     const p = PRESETS[name]; if (!p) return;
@@ -436,6 +442,56 @@
     host.innerHTML = svg;
   }
 
+  // ---- recalibration: reset / clear / rebuild from lot ----------------------
+  function refreshAfterPolyOp(msg) { state.selPoly = null; highlightPoly(); renderElements(); buildLayerList(); showProps(); setSaved(msg || '✓ Saved locally'); }
+  function resetEditablePolygons() {
+    if (!window.KairosLayout || !window.KairosLayout.resetEditablePolygons) return;
+    if (!confirm('Reset editable polygons al seed (área utilizable, oportunidad ferrocarril, frente/parqueo, servicio, restringidas, dibujados). NO borra el lote original ni elementos/notas. ¿Continuar?')) return;
+    window.KairosLayout.resetEditablePolygons(); refreshAfterPolyOp('✓ Polígonos editables reseteados');
+  }
+  function clearEditableOverlays() {
+    if (!confirm('Clear editable overlays: borra polígonos editables + elementos + notas y limpia el workspace local. Quedan solo el lote original + contexto OSM. ¿Continuar?')) return;
+    if (window.KairosLayout && window.KairosLayout.clearEditablePolygons) window.KairosLayout.clearEditablePolygons();
+    state.elements = []; state.notes = []; state.sel = null; state.selPoly = null; state.hiddenEl.clear(); state.hiddenNote.clear();
+    try { localStorage.removeItem(LS_EL); localStorage.removeItem(LS_NOTE); } catch (e) {}
+    highlightPoly(); renderElements(); renderNotes(); buildLayerList(); showProps(); setSaved('✓ Overlays editables borrados (lote original intacto)');
+  }
+  function rebuildFromLot() {
+    if (!window.KairosLayout || !window.KairosLayout.rebuildFromLot) return;
+    if (!confirm('Rebuild from original lot: regenera polígonos base desde el lote real (usable, frente/parqueo, servicio, oportunidad ferrocarril, retiro). Sustituye los polígonos base actuales. ¿Continuar?')) return;
+    const ok = window.KairosLayout.rebuildFromLot();
+    refreshAfterPolyOp(ok ? '✓ Polígonos generados automáticamente · revise y ajuste' : 'No se pudo (falta el lote)');
+    if (ok) alert('Polígonos generados automáticamente. Revise y ajuste manualmente.');
+  }
+
+  // ---- snap helpers ---------------------------------------------------------
+  function projOnSeg(p, a, b) { const ax = a[1], ay = a[0], bx = b[1], by = b[0], px = p[1], py = p[0];
+    const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1; let t = ((px - ax) * dx + (py - ay) * dy) / L2; t = Math.max(0, Math.min(1, t));
+    return [ay + t * dy, ax + t * dx]; }
+  function nearestOnPath(p, path, closed) { let best = null, bd = Infinity; const n = path.length;
+    for (let i = 0; i < (closed ? n : n - 1); i++) { const q = projOnSeg(p, path[i], path[(i + 1) % n]); const d = metersBetween(p, q); if (d < bd) { bd = d; best = q; } } return best ? { pt: best, d: bd } : null; }
+  function snapPoint(latlng) {
+    const p = [latlng.lat, latlng.lng];
+    if (state.snap === 'lot') { const lot = window.KairosLayout && window.KairosLayout.getLotRef && window.KairosLayout.getLotRef(); if (lot && lot.length > 2) { const r = nearestOnPath(p, lot, true); if (r && r.d < 12) return L.latLng(r.pt[0], r.pt[1]); } }
+    if (state.snap === 'road' && state.roadLine && state.roadLine.length > 1) { const r = nearestOnPath(p, state.roadLine, false); if (r && r.d < 25) return L.latLng(r.pt[0], r.pt[1]); }
+    return latlng;
+  }
+
+  // ---- Draw Polygon (real: click points, dblclick/Finish, Esc cancel) -------
+  function renderDrawTmp() {
+    clearGroup('drawTmp'); if (!state.drawPts.length) return;
+    state.drawPts.forEach(p => state.layers.drawTmp.addLayer(L.circleMarker(p, { radius: 5, color: '#fff', weight: 2, fillColor: '#e7b15a', fillOpacity: 1 })));
+    if (state.drawPts.length > 1) state.layers.drawTmp.addLayer(L.polyline(state.drawPts, { color: '#e7b15a', weight: 2, dashArray: '4 4' }));
+  }
+  function addDrawPoint(latlng) { const s = snapPoint(latlng); state.drawPts.push([s.lat, s.lng]); renderDrawTmp(); if ($('wsDrawInfo')) $('wsDrawInfo').textContent = state.drawPts.length + ' pts · doble-clic/Finish cierra · Esc cancela'; }
+  function finishDraw() {
+    if (state.drawPts.length < 3) { if ($('wsDrawInfo')) $('wsDrawInfo').textContent = 'Mínimo 3 puntos.'; return; }
+    const key = window.KairosLayout && window.KairosLayout.addDrawnPolygon ? window.KairosLayout.addDrawnPolygon(state.drawCat, state.drawPts, state.drawCat) : null;
+    state.drawPts = []; clearGroup('drawTmp'); renderElements(); buildLayerList();
+    if (key) selectPoly(key); setMode('select'); setSaved('✓ Polígono dibujado (' + state.drawCat + ')');
+  }
+  function cancelDraw() { state.drawPts = []; clearGroup('drawTmp'); if ($('wsDrawInfo')) $('wsDrawInfo').textContent = 'Cancelado.'; }
+
   // ---- UI wiring ------------------------------------------------------------
   function buildPalette() {
     const pal = $('wsPaletteList'); if (!pal) return;
@@ -455,12 +511,23 @@
     $('wsExportNotes') && $('wsExportNotes').addEventListener('click', () => dl(notesDoc(), 'logos-parador-notes.json'));
     $('wsImport') && $('wsImport').addEventListener('change', (e) => { if (e.target.files && e.target.files[0]) importJson(e.target.files[0]); });
     map.on('click', (e) => {
+      if (state.mode === 'draw') return addDrawPoint(e.latlng);
       if (state.mode === 'add') return addElementAt(e.latlng);
       if (state.mode === 'notes') return addNoteAt(e.latlng);
       if (state.mode === 'select' || state.mode === 'move') { if (Date.now() - (state._elClick || 0) < 90) return; hitTestPoly(e.latlng); }
     });
-    // "Delete selected" button + clear-selection on Escape
+    map.on('dblclick', (e) => { if (state.mode === 'draw') { L.DomEvent.stop(e); finishDraw(); } });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.mode === 'draw') { cancelDraw(); } });
+    // "Delete selected" button
     $('wsDeleteSel') && $('wsDeleteSel').addEventListener('click', deleteSelected);
+    // recalibration buttons + draw bar + snap
+    $('wsResetPolys') && $('wsResetPolys').addEventListener('click', resetEditablePolygons);
+    $('wsClearOverlays') && $('wsClearOverlays').addEventListener('click', clearEditableOverlays);
+    $('wsRebuild') && $('wsRebuild').addEventListener('click', rebuildFromLot);
+    $('wsDrawFinish') && $('wsDrawFinish').addEventListener('click', finishDraw);
+    $('wsDrawCancel') && $('wsDrawCancel').addEventListener('click', () => { cancelDraw(); setMode('select'); });
+    const dc = $('wsDrawCat'); if (dc) dc.addEventListener('change', () => state.drawCat = dc.value);
+    const sn = $('wsSnap'); if (sn) sn.addEventListener('change', () => state.snap = sn.value);
     // delete key
     document.addEventListener('keydown', (e) => { if ((e.key === 'Delete' || e.key === 'Backspace') && (state.sel != null || state.selPoly)) { const tag = (e.target && e.target.tagName) || ''; if (/INPUT|TEXTAREA|SELECT/.test(tag) || (e.target && e.target.isContentEditable)) return; e.preventDefault(); deleteSelected(); } });
     // save / reset
@@ -494,6 +561,12 @@
     load(); buildPalette(); bind(); setupSatellite();
     fetch(DATA + 'spatial/vegetation-strategy.json').then(r => r.ok ? r.json() : null).then(v => { state.veg = v; renderElements(); }).catch(() => {});
     fetch(DATA + 'spatial/spatial-zones.json').then(r => r.ok ? r.json() : null).then(z => { state.anchors = (z && z.camera_anchors) || []; }).catch(() => {});
+    // road line (Troncal) for snap-to-road — real OSM geometry, clipped near the lot
+    fetch(DATA + 'osm/osm-context-seed.json').then(r => r.ok ? r.json() : null).then(o => {
+      if (!o || !o.geojson) return; const C = (window.MapCalibration.getCentroid && window.MapCalibration.getCentroid()) || { lat: 3.7316, lon: -76.3236 };
+      const f = o.geojson.features.find(x => x.properties.category === 'roads' && /Troncal/i.test(x.properties.name || ''));
+      if (f) state.roadLine = f.geometry.coordinates.filter(([lo, la]) => Math.abs(la - C.lat) < 0.004 && Math.abs(lo - C.lon) < 0.004).map(([lo, la]) => [la, lo]);
+    }).catch(() => {});
     renderElements(); renderNotes(); showProps(); buildLayerList(); setMode('select'); setSaved('✓ Saved locally');
   }
 

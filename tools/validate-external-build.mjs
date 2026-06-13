@@ -296,6 +296,11 @@ if (existsSync(mcPath)) {
   // delete-fix V1
   /id=["']wsDeleteSel["']/.test(W) ? ok('workspace: "Delete selected" button') : fail('workspace: missing Delete selected button');
   /id=["']wsLayers["']/.test(W) ? ok('workspace: compact layer list (Polygons/Elements/Notes)') : fail('workspace: missing layer list');
+  // recalibration V1
+  (/id=["']wsResetPolys["']/.test(W) && /id=["']wsClearOverlays["']/.test(W) && /id=["']wsRebuild["']/.test(W)) ? ok('workspace: reset/clear/rebuild polygon buttons') : fail('workspace: missing reset/clear/rebuild buttons');
+  (/id=["']wsDrawBar["']/.test(W) && /id=["']wsDrawFinish["']/.test(W) && /id=["']wsDrawCat["']/.test(W) && /id=["']wsSnap["']/.test(W)) ? ok('workspace: manual Draw Polygon bar (category + snap + finish)') : fail('workspace: missing manual draw bar');
+  /data-ws-preset=["']recal["']/.test(W) ? ok('workspace: Clean Recalibration preset') : fail('workspace: missing Clean Recalibration preset');
+  /Los pol[ií]gonos editables son hip[oó]tesis de dise[ñn]o\. No modifican el lote legal/i.test(W.replace(/\s+/g, ' ')) ? ok('workspace: editable-polygons-are-hypotheses warning') : fail('workspace: missing design-hypothesis warning');
 }
 const wsPathExp = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPathExp)) {
@@ -315,6 +320,11 @@ if (existsSync(wsPathExp)) {
   (/function hitTestPoly/.test(WJ2) && /function selectPoly/.test(WJ2)) ? ok('workspace.js: click-to-select polygon (hit-test)') : fail('workspace.js: missing polygon click-select');
   /function buildLayerList/.test(WJ2) ? ok('workspace.js: layer list (select/hide/delete rows)') : fail('workspace.js: missing layer list logic');
   /Original lot from lot\.json — read-only|read-only/.test(WJ2) ? ok('workspace.js: original lot read-only guard') : fail('workspace.js: missing read-only lot guard');
+  // recalibration V1 behaviours
+  (/function finishDraw/.test(WJ2) && /function addDrawPoint/.test(WJ2) && /function cancelDraw/.test(WJ2)) ? ok('workspace.js: real Draw Polygon (points/finish/cancel)') : fail('workspace.js: missing manual draw flow');
+  /function snapPoint/.test(WJ2) ? ok('workspace.js: snap (lot edge / road side / off)') : fail('workspace.js: missing snap logic');
+  (/rebuildFromLot/.test(WJ2) && /resetEditablePolygons/.test(WJ2) && /clearEditablePolygons|clearEditableOverlays/.test(WJ2)) ? ok('workspace.js: reset/clear/rebuild wired') : fail('workspace.js: missing reset/clear/rebuild');
+  /source_lot_unchanged|KairosLayout\.flags/.test(WJ2) ? ok('workspace.js: export flags (source_lot_unchanged / recalibrated / generated_from_lot)') : fail('workspace.js: missing export recalibration flags');
 }
 // layout-editor additive mutators (move/scale/delete/hide/list) — present & no lot.json write
 const lePathExp = join(BASE, 'geometry-engine', 'map-calibration', 'layout-editor.js');
@@ -324,6 +334,11 @@ if (existsSync(lePathExp)) {
   (/deletePolygon:/.test(LE2) && /setHidden:/.test(LE2) && /listPolygons:/.test(LE2)) ? ok('layout-editor: delete-any-polygon + hide + list (delete-fix)') : fail('layout-editor: missing delete/hide/list API');
   /Original lot from lot\.json — read-only/.test(LE2) ? ok('layout-editor: original lot read-only tooltip') : fail('layout-editor: missing read-only lot tooltip');
   /deletePolygon: \(key\) => \{[^]*?key === 'lot'[^]*?return false/.test(LE2) ? ok('layout-editor: lot.json polygon never deleted') : fail('layout-editor: lot delete not guarded');
+  // recalibration V1
+  (/function rebuildFromLot/.test(LE2) && /rebuildFromLot:/.test(LE2)) ? ok('layout-editor: rebuild base polygons from real lot') : fail('layout-editor: missing rebuildFromLot');
+  (/resetEditablePolygons:/.test(LE2) && /clearEditablePolygons:/.test(LE2) && /addDrawnPolygon:/.test(LE2)) ? ok('layout-editor: reset/clear/addDrawn API') : fail('layout-editor: missing reset/clear/addDrawn');
+  (/drawn_polygons/.test(LE2)) ? ok('layout-editor: drawn_polygons support (manual draw)') : fail('layout-editor: missing drawn_polygons');
+  /source_lot_unchanged: true/.test(LE2) ? ok('layout-editor: flags source_lot_unchanged=true') : fail('layout-editor: missing source_lot_unchanged flag');
 }
 const wsPath = join(BASE, 'geometry-engine', 'map-calibration', 'workspace.js');
 if (existsSync(wsPath)) {
